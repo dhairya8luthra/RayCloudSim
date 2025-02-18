@@ -416,14 +416,16 @@ class Env_Trust(Env):
         super().__init__(scenario, config_file)
         self.down = {}
         self.up = {}
+        self.down.setdefault(self.controller.now, [])
+        self.up.setdefault(self.controller.now, [])
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
         while True:
             self.info4frame[self.now] = {
-                'node': {k: 0 if not node.get_online() else (0.75 if isinstance(node, TrustNode) else 0.25)
+                'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
-                'edge': {str(k): link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0
+                'edge': {str(k): link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
             }
             if len(self.config['VisFrame']['TargetNodeList']) > 0:
@@ -436,10 +438,10 @@ class Env_Trust(Env):
 
     def toggle_status(self):
         
-        # Toggle to offline
-        for node in self.down[self.controller.now]:
-            self.scenario.get_node(node).set_online(False)
-
-        # Toggle to online
-        for node in self.up[self.controller.now]:
-            self.scenario.get_node(node).set_online(True)
+        now = int(self.controller.now)
+        if now in self.down:
+            for node in self.down[now]:
+                self.scenario.get_node(node).set_online(False)
+        if now in self.up:
+            for node in self.up[now]:
+                self.scenario.get_node(node).set_online(True)
