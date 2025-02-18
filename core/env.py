@@ -414,6 +414,8 @@ class Env_Trust(Env):
 
     def __init__(self, scenario: BaseScenario, config_file):
         super().__init__(scenario, config_file)
+        self.down = {}
+        self.up = {}
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -431,3 +433,13 @@ class Env_Trust(Env):
                     for item in self.config['VisFrame']['TargetNodeList']
                 }
             yield self.controller.timeout(1)
+
+    def toggle_status(self):
+        
+        # Toggle to offline
+        for node in self.down[self.controller.now]:
+            self.scenario.get_node(node).set_online(False)
+
+        # Toggle to online
+        for node in self.up[self.controller.now]:
+            self.scenario.get_node(node).set_online(True)
