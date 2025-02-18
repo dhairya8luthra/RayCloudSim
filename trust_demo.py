@@ -26,6 +26,7 @@ def main():
     scenario=Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
     env = Env_Trust(scenario, config_file="core/configs/env_config.json")
 
+
     # Load simulated tasks
     data = pd.read_csv("examples/dataset/task_dataset.csv")
     simulated_tasks = list(data.iloc[:].values)
@@ -67,6 +68,8 @@ def main():
     while env.process_task_cnt < len(simulated_tasks):
         until += 1
         try:
+            # Add the toggling of the states
+            env.toggle_status()
             env.run(until=until)
         except Exception as e:
             error_handler(e)
