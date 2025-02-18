@@ -226,6 +226,7 @@ class MaliciousNode(TrustNode):
                          idle_energy_coef, exe_energy_coef)
         
         self.malicious_type = mal_type
+        self.good_karma = 0
 
     def set_malicious_type(self, mal_type: int):
         self.malicious_type = mal_type
@@ -241,7 +242,8 @@ class MaliciousNode(TrustNode):
             threshold: The trust threshold to trigger the attack.
             delay: The amount of delay to introduce.
         """
-        if self.get_trust_score(self) < 0.75:
+        if self.good_karma >= 10:
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
+            self.good_karma = 0
             time.sleep(delay)
