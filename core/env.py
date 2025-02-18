@@ -9,7 +9,7 @@ from core.base_scenario import BaseScenario
 from core.infrastructure import Link
 from core.task import Task
 
-from zoo.node import MaliciousNode
+from zoo.node import MaliciousNode, TrustNode
 
 __all__ = ["EnvLogger", "Env", "Env_Trust"]
 
@@ -419,7 +419,7 @@ class Env_Trust(Env):
         """Recorder the info required for simulation frames."""
         while True:
             self.info4frame[self.now] = {
-                'node': {k: 0.75 if isinstance(node, MaliciousNode) else 0.25 
+                'node': {k: 0 if not node.get_online() else (0.75 if isinstance(node, TrustNode) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
                 'edge': {str(k): node.quantify_bandwidth() 
                          for k, node in self.scenario.get_links().items()},

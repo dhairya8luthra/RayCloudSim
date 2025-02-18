@@ -166,7 +166,7 @@ class TrustNode(Node):
 
         # dynamic attributes
         self.trust_mat = {}
-        self.online = False
+        self.online = True
         self.downtimes = {}
 
         self.trust_mat[self.name] = self_trust
