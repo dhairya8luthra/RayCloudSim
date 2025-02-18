@@ -416,6 +416,8 @@ class Env_Trust(Env):
         super().__init__(scenario, config_file)
         self.down = {}
         self.up = {}
+        self.down.setdefault(self.controller.now, [])
+        self.up.setdefault(self.controller.now, [])
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -436,10 +438,10 @@ class Env_Trust(Env):
 
     def toggle_status(self):
         
-        # Toggle to offline
-        for node in self.down[self.controller.now]:
-            self.scenario.get_node(node).set_online(False)
-
-        # Toggle to online
-        for node in self.up[self.controller.now]:
-            self.scenario.get_node(node).set_online(True)
+        now = int(self.controller.now)
+        if now in self.down:
+            for node in self.down[now]:
+                self.scenario.get_node(node).set_online(False)
+        if now in self.up:
+            for node in self.up[now]:
+                self.scenario.get_node(node).set_online(True)
