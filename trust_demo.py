@@ -11,7 +11,7 @@ sys.path.insert(0, parent_dir)
 
 import pandas as pd
 
-from core.env import Env
+from core.env import Env_Trust
 from core.task import Task
 from core.vis import *
 
@@ -24,10 +24,10 @@ def error_handler(error: Exception):
 def main():
     # Create the Env
     scenario=Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
-    env = Env(scenario, config_file="core/configs/env_config.json")
+    env = Env_Trust(scenario, config_file="core/configs/env_config.json")
 
     # Load simulated tasks
-    data = pd.read_csv("examples/dataset/demo3_dataset.csv")
+    data = pd.read_csv("examples/dataset/task_dataset.csv")
     simulated_tasks = list(data.iloc[:].values)
     n_tasks = len(simulated_tasks)
 

@@ -9,7 +9,9 @@ from core.base_scenario import BaseScenario
 from core.infrastructure import Link
 from core.task import Task
 
-__all__ = ["EnvLogger", "Env"]
+from zoo.node import MaliciousNode
+
+__all__ = ["EnvLogger", "Env", "Env_Trust"]
 
 
 # Flags
@@ -63,7 +65,7 @@ class Env:
         # Load the config file
         with open(config_file, 'r') as fr:
             self.config = json.load(fr)
-        assert len(self.config['VisFrame']['TargetNodeList']) <= 10, \
+        assert len(self.config['VisFrame']['TargetNodeList']) <= 13, \
             "For visualization layout considerations, the default number of tracked nodes " \
             "does not exceed ten, and users are permitted to modify the layout for extension."
         
@@ -407,3 +409,25 @@ class Env:
             self.info4frame_recorder.interrupt()
 
         self.logger.log("Simulation completed!")
+
+class Env_Trust(Env):
+
+    def __init__(self, scenario: BaseScenario, config_file):
+        super().__init__(scenario, config_file)
+
+    def info4frame_clock(self):
+        """Recorder the info required for simulation frames."""
+        while True:
+            self.info4frame[self.now] = {
+                'node': {k: 0.75 if isinstance(node, MaliciousNode) else 0.25 
+                         for k, node in self.scenario.get_nodes().items()},
+                'edge': {str(k): node.quantify_bandwidth() 
+                         for k, node in self.scenario.get_links().items()},
+            }
+            if len(self.config['VisFrame']['TargetNodeList']) > 0:
+                self.info4frame[self.now]['target'] = {
+                    item: [self.scenario.get_node(item).active_task_ids[:], 
+                           self.scenario.get_node(item).task_buffer.task_ids[:]]
+                    for item in self.config['VisFrame']['TargetNodeList']
+                }
+            yield self.controller.timeout(1)
