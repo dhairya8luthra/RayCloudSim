@@ -31,6 +31,7 @@ class Scenario(BaseScenario):
                     node_id=node_info['NodeId'], 
                      name=node_info['NodeName'], 
                      self_trust=1.0,
+                     mal_type=1,
                      max_cpu_freq=node_info['MaxCpuFreq'], 
                      max_buffer_size=node_info['MaxBufferSize'], 
                      location=Location(node_info['LocX'], node_info['LocY']),
@@ -41,5 +42,5 @@ class Scenario(BaseScenario):
                 self.infrastructure.add_node(malicious_node)
             self.node_id2name[node_info['NodeId']] = node_info['NodeName']
 
-def status(self, node_name=None, link_args=None):
-    return
+    def status(self, node_name=None, link_args=None):
+        return
