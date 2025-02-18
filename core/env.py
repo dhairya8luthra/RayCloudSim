@@ -421,8 +421,8 @@ class Env_Trust(Env):
             self.info4frame[self.now] = {
                 'node': {k: 0 if not node.get_online() else (0.75 if isinstance(node, TrustNode) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
-                'edge': {str(k): node.quantify_bandwidth() 
-                         for k, node in self.scenario.get_links().items()},
+                'edge': {str(k): link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0
+                         for k, link in self.scenario.get_links().items()},
             }
             if len(self.config['VisFrame']['TargetNodeList']) > 0:
                 self.info4frame[self.now]['target'] = {
