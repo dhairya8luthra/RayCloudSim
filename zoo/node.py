@@ -246,4 +246,4 @@ class MaliciousNode(TrustNode):
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
             self.good_karma = 0
-            time.sleep(delay)
+            # time.sleep(delay)
