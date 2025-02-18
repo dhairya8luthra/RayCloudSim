@@ -1,1 +1,1 @@
-from .node import WirelessNode, MobileNode
+from .node import WirelessNode, MobileNode, TrustNode, MaliciousNode
