@@ -1,5 +1,12 @@
 import os
 import sys
+import time
+import math
+import random
+
+from typing import Optional, List
+
+from core.infrastructure import Node, Location
 
 PROJECT_NAME = 'RayCloudSim'
 cur_path = os.path.abspath(os.path.dirname(__file__))
@@ -8,12 +15,6 @@ while os.path.split(os.path.split(root_path)[0])[-1] != PROJECT_NAME:
     root_path = os.path.split(root_path)[0]
 root_path = os.path.split(root_path)[0]
 sys.path.append(root_path)
-
-import math
-
-from typing import Optional, List
-
-from core.infrastructure import Node, Location
 
 
 class WirelessNode(Node):
@@ -135,3 +136,112 @@ class MobileNode(WirelessNode):
 
     def update_location(self, new_loc: Location):
         self.location = new_loc
+
+
+class TrustNode(Node):
+    """Node with trust attributes.
+
+    (1) Maintains the trust of all the neighboring nodes
+    (2) Trust level is updated based on the trust of the neighboring nodes
+
+    Attributes:
+        default attributes from parent class Node
+        trust_mat: trust matrix of all the nodes of the topology
+        online: online status
+        downtimes: downtimes of the node
+        malicious: malicious status
+    """
+
+    def __init__(self, node_id: int, name: str,
+                 self_trust: float,
+                 max_cpu_freq: float,
+                 max_buffer_size: Optional[int] = 0,
+                 location: Optional[Location] = None,
+                 idle_energy_coef: Optional[float] = 0, 
+                 exe_energy_coef: Optional[float] = 0):
+        super().__init__(node_id, name, 
+                         max_cpu_freq, max_buffer_size, 
+                         location, 
+                         idle_energy_coef, exe_energy_coef)
+
+        # dynamic attributes
+        self.trust_mat = {}
+        self.online = False
+        self.downtimes = {}
+
+        self.trust_mat[self.name] = self_trust
+
+    def set_online(self, status: bool):
+        self.online = status
+
+    def get_online(self) -> bool:
+        return self.online
+    
+    def set_downtime(self, other_node: "Node", downtime: int):
+        self.downtimes[other_node.name] = downtime
+
+    def get_downtime(self, other_node: "Node") -> int:
+        return self.downtimes.get(other_node.name, 0)
+
+    def set_trust_score(self, other_node: "Node", score: float):
+        """Set the trust score for another node.
+        
+        Args:
+            other_node: The node for which the trust score is being set.
+            score: A float representing the trust level (e.g., between 0 and 1).
+        """
+        self.trust[other_node.name] = score
+
+    def get_trust_score(self, other_node: "Node") -> float:
+        """Retrieve the trust score for another node.
+        
+        Args:
+            other_node: The node whose trust score is requested.
+        
+        Returns:
+            The trust score if it exists, otherwise 0.0.
+        """
+        return self.trust.get(other_node.name, 0.0)
+
+
+class MaliciousNode(TrustNode):
+    """Malicious Node.
+
+    (1) Node with malicious tendency
+    (2) Malicious nodes can be of different types
+    """
+
+    def __init__(self, node_id: int, name: str,
+                 self_trust: float,
+                 mal_type: int,
+                 max_cpu_freq: float,
+                 max_buffer_size: Optional[int] = 0,
+                 location: Optional[Location] = None,
+                 idle_energy_coef: Optional[float] = 0, 
+                 exe_energy_coef: Optional[float] = 0):
+        super().__init__(node_id, name, 
+                         self_trust, 
+                         max_cpu_freq, max_buffer_size, 
+                         location, 
+                         idle_energy_coef, exe_energy_coef)
+        
+        self.malicious_type = mal_type
+
+    def set_malicious_type(self, mal_type: int):
+        self.malicious_type = mal_type
+
+    def get_malicious_type(self) -> int:
+        return self.malicious_type
+    
+    # Function for On-and-Off Attacks in trust based-environments delaying execution after crossing a certain threshold
+    def execute_on_and_off_attack(self):
+        """Execute an on-and-off attack by delaying execution after crossing a certain threshold.
+        
+        Args:
+            threshold: The trust threshold to trigger the attack.
+            delay: The amount of delay to introduce.
+        """
+        if self.get_trust_score(self) < 0.75:
+            # generate a random sleep
+            delay = random.uniform(0.05, 0.1)
+            time.sleep(delay)
