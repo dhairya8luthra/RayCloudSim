@@ -58,6 +58,7 @@ def main():
 
             # Execute the simulation with error handler
             try:
+                env.toggle_status()
                 env.run(until=until)
             except Exception as e:
                 error_handler(e)
