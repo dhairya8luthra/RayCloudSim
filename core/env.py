@@ -418,6 +418,9 @@ class Env_Trust(Env):
         self.up = {}
         self.down.setdefault(self.controller.now, [])
         self.up.setdefault(self.controller.now, [])
+        self.ONLINE_NODES = [node for node in self.scenario.get_nodes() if node.get_online()]
+        self.ACTIVE_NODES = []
+
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -425,7 +428,7 @@ class Env_Trust(Env):
             self.info4frame[self.now] = {
                 'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
-                'edge': {str(k): link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
+                'edge': {str(k): 5.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
             }
             if len(self.config['VisFrame']['TargetNodeList']) > 0:
@@ -445,3 +448,13 @@ class Env_Trust(Env):
         if now in self.up:
             for node in self.up[now]:
                 self.scenario.get_node(node).set_online(True)
+
+    def update_trust(self):
+
+        # Update the trust matrices of the nodes
+        for node_name in self.ONLINE_NODES:
+            node = self.scenario.get_node(node_name)
+            if isinstance(node, TrustNode):
+                for neighbor in self.scenario.infrastructure.graph.neighbors(node_name):
+                    if neighbor in self.ONLINE_NODES:
+                        node.trust_mat[neighbor] = self.scenario.get_node(neighbor).trust_mat[node_name]
