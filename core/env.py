@@ -455,6 +455,4 @@ class Env_Trust(Env):
         for node_name in self.ONLINE_NODES:
             node = self.scenario.get_node(node_name)
             if isinstance(node, TrustNode):
-                for neighbor in self.scenario.infrastructure.graph.neighbors(node_name):
-                    if neighbor in self.ONLINE_NODES:
-                        node.trust_mat[neighbor] = self.scenario.get_node(neighbor).trust_mat[node_name]
+                node.update_trust_matrix()
