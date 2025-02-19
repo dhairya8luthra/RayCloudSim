@@ -418,7 +418,7 @@ class Env_Trust(Env):
         self.up = {}
         self.down.setdefault(self.controller.now, [])
         self.up.setdefault(self.controller.now, [])
-        self.ONLINE_NODES = [node for node in self.scenario.get_nodes() if node.get_online()]
+        self.ONLINE_NODES = [node for k, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
 
 
