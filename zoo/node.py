@@ -202,6 +202,20 @@ class TrustNode(Node):
         """
         return self.trust.get(other_node.name, 0.0)
 
+    def compute_trust(self, other_node: "Node") -> float:
+        """Compute the trust score for another node.
+        
+        Args:
+            other_node: The node for which the trust score is being computed.
+        
+        Returns:
+            The trust score for the other node.
+        """
+        return 0.0
+
+    def update_trust_matrix(self):
+        """Update the trust scores for all neighboring nodes."""
+        pass
 
 class MaliciousNode(TrustNode):
     """Malicious Node.
