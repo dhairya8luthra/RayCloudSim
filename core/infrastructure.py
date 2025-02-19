@@ -5,8 +5,6 @@ import warnings
 from collections import deque, namedtuple
 from typing import Optional, Iterator, List
 
-from RayCloudSim.core.task import Task
-
 __all__ = ["Location", "Data", "DataFlow", "Buffer", "Node", "Link", "Infrastructure"]
 
 
