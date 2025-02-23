@@ -446,7 +446,7 @@ class Env_Trust(Env):
             self.info4frame[self.now] = {
                 'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
-                'edge': {str(k): 20.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
+                'edge': {str(k): 200.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
             }
             if len(self.config['VisFrame']['TargetNodeList']) > 0:
