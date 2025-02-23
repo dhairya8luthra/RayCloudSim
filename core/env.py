@@ -467,31 +467,35 @@ class Env_Trust(Env):
             for node in self.up[now]:
                 self.scenario.get_node(node).set_online(True)
 
-    def update_trust(self):
+    def compute_trust(self):
+
+        # Example trust updates
+        TRUST_INCREASE = 0.1
+        TRUST_DECREASE = -0.2
+        TRUST_DECREASE_SMALL = -0.1
+        NO_CHANGE = 0.0
 
         for message in self.trust_messages:
             src = self.scenario.get_node(message[0])
             dst = self.scenario.get_node(message[1])
             task_id = message[2]
 
-            net_score = 0
+            net_score = src.get_trust_score(self, dst)
 
             # Check the message type for each message
             if message[3] == FLAG_TASK_EXECUTION_DONE:
                 # Trust Value increase
-                pass
+                net_score += TRUST_INCREASE  
             elif message[3] == FLAG_TASK_EXECUTION_FAIL:
-                # Trust Value decrease
-                pass
+                net_score += TRUST_DECREASE
             elif message[3] == FLAG_TASK_EXECUTION_TIMEOUT:
-                # Trust Value decrease slightly
-                pass
+                net_score += TRUST_DECREASE_SMALL 
             elif message[3] == FLAG_TASK_EXECUTION_NET_CONGESTION:
                 # Trust Value no change
-                pass
+                 net_score += NO_CHANGE
             elif message[3] == FLAG_TASK_INSUFFICIENT_BUFFER:
                 # Trust Value no change
-                pass
+                 net_score += NO_CHANGE 
 
             src.set_trust_score(self, dst, net_score)
 
