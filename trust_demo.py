@@ -58,6 +58,7 @@ def main():
 
             # Execute the simulation with error handler
             try:
+                env.compute_trust()
                 env.toggle_status()
                 env.run(until=until)
             except Exception as e:
@@ -70,6 +71,7 @@ def main():
         until += 1
         try:
             # Add the toggling of the states
+            env.compute_trust()
             env.toggle_status()
             env.run(until=until)
         except Exception as e:
