@@ -51,7 +51,8 @@ def main():
                     trans_bit_rate=task_info[5],
                     ddl=task_info[6],
                     src_name=task_info[7],
-                    task_name=task_info[0])
+                    task_name=task_info[0]
+                    )
         
         while True:
             # Catch the returned info of completed tasks
