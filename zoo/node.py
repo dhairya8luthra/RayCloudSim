@@ -189,7 +189,10 @@ class TrustNode(Node):
             other_node: The node for which the trust score is being set.
             score: A float representing the trust level (e.g., between 0 and 1).
         """
-        self.trust[other_node.name] = score
+        if score <= 1.0:
+            self.trust[other_node.name] = score
+        else:
+            self.trust[other_node.name] = 1.0
 
     def get_trust_score(self, other_node: "Node") -> float:
         """Retrieve the trust score for another node.
