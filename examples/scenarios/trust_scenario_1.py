@@ -14,8 +14,7 @@ class Scenario(BaseScenario):
         for node_info in self.json_nodes:
 
             if node_info['NodeType'] == "TrustNode":
-                self.infrastructure.add_node(
-                    TrustNode(
+                trust_node = TrustNode(
                         node_id=node_info['NodeId'], 
                          name=node_info['NodeName'], 
                          self_trust=1.0,
@@ -24,7 +23,10 @@ class Scenario(BaseScenario):
                          location=Location(node_info['LocX'], node_info['LocY']),
                          idle_energy_coef=node_info['IdleEnergyCoef'], 
                          exe_energy_coef=node_info['ExeEnergyCoef']
-                    )
+                )
+                trust_node.trust_mat = {node['NodeName']: 0.0 if node['NodeName'] != node_info['NodeName'] else 1.0 for node in self.json_nodes}
+                self.infrastructure.add_node(
+                    trust_node
                 )
             elif node_info['NodeType'] == "MaliciousNode":
                 malicious_node = MaliciousNode(
