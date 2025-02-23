@@ -202,21 +202,6 @@ class TrustNode(Node):
         """
         return self.trust.get(other_node.name, 0.0)
 
-    def compute_trust(self, other_node: "Node") -> float:
-        """Compute the trust score for another node.
-        
-        Args:
-            other_node: The node for which the trust score is being computed.
-        
-        Returns:
-            The trust score for the other node.
-        """
-        return 0.0
-
-    def update_trust_matrix(self):
-        """Update the trust scores for all neighboring nodes."""
-        pass
-
 class MaliciousNode(TrustNode):
     """Malicious Node.
 
@@ -248,7 +233,7 @@ class MaliciousNode(TrustNode):
         return self.malicious_type
     
     # Function for On-and-Off Attacks in trust based-environments delaying execution after crossing a certain threshold
-    def execute_on_and_off_attack(self):
+    def execute_on_and_off_attack(self) ->  int:
         """Execute an on-and-off attack by delaying execution after crossing a certain threshold.
         
         Args:
@@ -259,4 +244,8 @@ class MaliciousNode(TrustNode):
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
             self.good_karma = 0
-            # time.sleep(delay)
+            return 1
+        else:
+            # Increase Karma
+            self.good_karma += 1
+            return 0
