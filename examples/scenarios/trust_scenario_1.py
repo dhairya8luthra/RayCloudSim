@@ -13,6 +13,11 @@ class Scenario(BaseScenario):
 
         for node_info in self.json_nodes:
 
+            if 'LocX' in node_info.keys() and 'LocY' in node_info.keys():
+                location=Location(node_info['LocX'], node_info['LocY'])
+            else:
+                location = None
+
             if node_info['NodeType'] == "TrustNode":
                 trust_node = TrustNode(
                         node_id=node_info['NodeId'], 
