@@ -18,8 +18,15 @@ from core.vis import *
 from examples.scenarios.trust_scenario_1 import Scenario
 
 
-def error_handler(error: Exception):
-    pass
+def error_handler_1(error: Exception):
+    print(1)
+
+def error_handler_2(error: Exception):
+    print(2)
+
+def error_handler_3(error: Exception):
+    print(3)
+
 
 def main():
     # Create the Env
@@ -59,10 +66,18 @@ def main():
             # Execute the simulation with error handler
             try:
                 env.compute_trust()
+            except Exception as e:
+                error_handler_1(e)
+
+            try:
                 env.toggle_status()
+            except Exception as e:
+                error_handler_2(e)
+
+            try:
                 env.run(until=until)
             except Exception as e:
-                error_handler(e)
+                error_handler_3(e)
 
             until += 1
 
@@ -70,12 +85,19 @@ def main():
     while env.process_task_cnt < len(simulated_tasks):
         until += 1
         try:
-            # Add the toggling of the states
             env.compute_trust()
+        except Exception as e:
+            error_handler_1(e)
+
+        try:
             env.toggle_status()
+        except Exception as e:
+            error_handler_2(e)
+
+        try:
             env.run(until=until)
         except Exception as e:
-            error_handler(e)
+            error_handler_3(e)
 
     env.close()
 
