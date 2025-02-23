@@ -16,6 +16,23 @@ __all__ = ["EnvLogger", "Env", "Env_Trust"]
 
 # Flags
 FLAG_TASK_EXECUTION_DONE = 0
+FLAG_TASK_EXECUTION_FAIL = 1
+
+# Execution Flags
+FLAG_TASK_EXECUTION_TIMEOUT = 2
+FLAG_TASK_EXECUTION_NET_CONGESTION = 3
+FLAG_TASK_EXECUTION_NO_PATH = 4
+FLAG_TASK_INSUFFICIENT_BUFFER = 5
+FLAG_TASK_DUPLICATE_ID = 6
+FLAG_TASK_ISOLATED_WIRELESS_NODE = 7
+
+"""
+-> FAIL           => Reduce the trust
+-> SUCCESS        => Increase the trust
+-> TIMEOUT        => Reduce the trust a little
+-> NO_PATH        => Don't change the trust
+-> NET_CONGESTION => Don't change the trust
+"""
 
 
 def user_defined_info():
