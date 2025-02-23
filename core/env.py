@@ -477,10 +477,14 @@ class Env_Trust(Env):
 
         for message in self.trust_messages:
             src = self.scenario.get_node(message[0])
+
+            if message[1] == None:
+                print(message[2], 1.3)
+                continue
+            
             dst = self.scenario.get_node(message[1])
             task_id = message[2]
-
-            net_score = src.get_trust_score(self, dst)
+            net_score = src.get_trust_score(dst)
 
             # Check the message type for each message
             if message[3] == FLAG_TASK_EXECUTION_DONE:
@@ -497,7 +501,11 @@ class Env_Trust(Env):
                 # Trust Value no change
                  net_score += NO_CHANGE 
 
-            src.set_trust_score(self, dst, net_score)
+            src.set_trust_score(dst, net_score)
+            print(f"Trust value from {src.name} to {dst.name} is {net_score}")
+
+        # Clear the trust messages
+        self.trust_messages.clear()
 
     def execute_task(self, task: Task, dst_name=None):
         """Transmission and Execution logics.
@@ -545,7 +553,7 @@ class Env_Trust(Env):
                     log_info = f"**NetworkXNoPathError: Task " \
                                f"{{{task.task_id}}}** Node {{{dst_name}}} " \
                                f"is inaccessible"
-                    self.trust_messages.append([task.src_name, task.dst, task.task_id, FLAG_TASK_EXECUTION_NO_PATH])
+                    self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NO_PATH])
                     self.logger.log(log_info)
                     raise EnvironmentError(
                         ('NetworkXNoPathError', log_info, task.task_id)
@@ -559,7 +567,7 @@ class Env_Trust(Env):
                                            key=task.task_id, 
                                            val=(1, ['IsolatedWirelessNode',]))
                         # self.processed_tasks.append(task.task_id)
-                        self.trust_messages.append([task.src_name, task.dst, task.task_id, FLAG_TASK_ISOLATED_WIRELESS_NODE])
+                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_ISOLATED_WIRELESS_NODE])
                         log_info = f"**IsolatedWirelessNode"
                         self.logger.log(log_info)
                         raise e
@@ -577,9 +585,8 @@ class Env_Trust(Env):
                                        f"{{{task.task_id}}}** network " \
                                        f"congestion Node {{{task.src_name}}} " \
                                        f"--> {{{dst_name}}}"
-                            self.trust_messages.append([task.src_name, task.dst, task.task_id, FLAG_TASK_EXECUTION_NET_CONGESTION])
+                            self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NET_CONGESTION])
                             self.logger.log(log_info)
-                            print("Hello There")
                             raise EnvironmentError(
                                 ('NetCongestionError', log_info, task.task_id)
                             )
@@ -640,7 +647,7 @@ class Env_Trust(Env):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    val=(1, ['InsufficientBufferError',]))
-                self.trust_messages.append([task.src_name, task.dst, task.task_id, FLAG_TASK_INSUFFICIENT_BUFFER])
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_INSUFFICIENT_BUFFER])
                 # self.processed_tasks.append(task.task_id)
                 self.logger.log(e.args[0][1])
                 raise e
@@ -655,7 +662,7 @@ class Env_Trust(Env):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    val=(1, ['TimeoutError',]))
-                self.trust_messages.append([task.src_name, task.dst, task.task_id, FLAG_TASK_EXECUTION_TIMEOUT])
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_EXECUTION_TIMEOUT])
                 # self.processed_tasks.append(task.task_id)
                 self.logger.log(e.args[0][1])
 
@@ -687,6 +694,9 @@ class Env_Trust(Env):
             else:
                 flag_exec = FLAG_TASK_EXECUTION_DONE
 
+            if flag_exec == FLAG_TASK_EXECUTION_FAIL:
+                print("Attack Attack Attack....")
+
             self.done_task_collector.put(
                 (task.task_id,
                  flag_exec,
@@ -715,7 +725,8 @@ class Env_Trust(Env):
                                            val=(0, [task.trans_time, task.wait_time, task.exe_time]))
                         
                         #trust buffer appends new tasks
-                        self.trust_messages.append([task.src_name, task.dst, task.task_id, flag])
+                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag])
+                        print(self.trust_messages)
                         task.deallocate()
 
                         del self.active_task_dict[task_id]
