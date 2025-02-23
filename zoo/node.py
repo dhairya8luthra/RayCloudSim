@@ -175,12 +175,6 @@ class TrustNode(Node):
 
     def get_online(self) -> bool:
         return self.online
-    
-    def set_downtime(self, other_node: "Node", downtime: int):
-        self.downtimes[other_node.name] = downtime
-
-    def get_downtime(self, other_node: "Node") -> int:
-        return self.downtimes.get(other_node.name, 0)
 
     def set_trust_score(self, other_node: "Node", score: float):
         """Set the trust score for another node.
@@ -190,9 +184,9 @@ class TrustNode(Node):
             score: A float representing the trust level (e.g., between 0 and 1).
         """
         if score <= 1.0:
-            self.trust[other_node.name] = score
+            self.trust_mat[other_node.name] = score
         else:
-            self.trust[other_node.name] = 1.0
+            self.trust_mat[other_node.name] = 1.0
 
     def get_trust_score(self, other_node: "Node") -> float:
         """Retrieve the trust score for another node.
@@ -203,7 +197,7 @@ class TrustNode(Node):
         Returns:
             The trust score if it exists, otherwise 0.0.
         """
-        return self.trust.get(other_node.name, 0.0)
+        return self.trust_mat.get(other_node.name, 0.0)
 
 class MaliciousNode(TrustNode):
     """Malicious Node.
@@ -243,7 +237,7 @@ class MaliciousNode(TrustNode):
             threshold: The trust threshold to trigger the attack.
             delay: The amount of delay to introduce.
         """
-        if self.good_karma >= 10:
+        if self.good_karma >= 2:
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
             self.good_karma = 0
