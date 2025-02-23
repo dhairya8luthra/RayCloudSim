@@ -16,7 +16,7 @@ def generate_topology(input_file, output_file):
         node_id = node["NodeId"]
         distances = [(other["NodeId"], distance(node, other)) for other in nodes if other["NodeId"] != node_id]
         distances.sort(key=lambda x: x[1])
-        nearest_neighbors = distances[:3]
+        nearest_neighbors = distances[:4]
 
         for neighbor_id, _ in nearest_neighbors:
             if not any(edge for edge in edges if edge["SrcNodeID"] == neighbor_id and edge["DstNodeID"] == node_id):
