@@ -477,6 +477,10 @@ class Env_Trust(Env):
 
         for message in self.trust_messages:
             src = self.scenario.get_node(message[0])
+            if isinstance(src, TrustNode):
+                if src.get_online == False:
+                    print(f"Node {src.name} is offline")
+                    continue
 
             if message[1] == None:
                 print(message[2], 1.3)
@@ -495,11 +499,9 @@ class Env_Trust(Env):
             elif message[3] == FLAG_TASK_EXECUTION_TIMEOUT:
                 net_score += TRUST_DECREASE_SMALL 
             elif message[3] == FLAG_TASK_EXECUTION_NET_CONGESTION:
-                # Trust Value no change
-                 net_score += NO_CHANGE
+                 net_score += NO_CHANGE # Trust Value no change
             elif message[3] == FLAG_TASK_INSUFFICIENT_BUFFER:
-                # Trust Value no change
-                 net_score += NO_CHANGE 
+                 net_score += NO_CHANGE # Trust Value no change
 
             src.set_trust_score(dst, net_score)
             print(f"Trust value from {src.name} to {dst.name} is {net_score}")
