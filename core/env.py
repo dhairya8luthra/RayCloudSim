@@ -876,16 +876,19 @@ class ZAM_env(Env):
 
             # Update the task counters
             if exec_flag == FLAG_TASK_EXECUTION_DONE or exec_flag == FLAG_TASK_EXECUTION_FAIL:
-                dst.set_total_task(dst.get_total_task() + 1)
+                dst.set_total_tasks(dst.get_total_tasks() + 1)
                 if exec_flag == FLAG_TASK_EXECUTION_DONE:
-                    dst.set_succesful_task(dst.get_successful_tasks() + 1)
+                    dst.set_successful_tasks(dst.get_successful_tasks() + 1)
 
             # Update the QoS Values
             exec_time = message[4]
             ddl = message[5]
-            if dst.get_total_task != 0  or ddl != 0:
-                dst.set_QoS((lambda_task * (dst.get_successful_task() / dst.get_total_task)) + (lambda_time * (1 - (exec_time / ddl))))
-            print(f"Qos of {dst.name} Updated: {oldQos} -> {dst.get_QoS()}")
+            if dst.get_total_tasks() != 0 or ddl != 0:
+                dst.set_QoS((lambda_task * (dst.get_successful_tasks() / dst.get_total_task)) + (lambda_time * (1 - (exec_time / ddl))))
+            print(f"QoS of {dst.name} Updated: {oldQos} -> {dst.get_QoS()}")
+
+        # Clear the trust messages
+        self.trust_messages.clear()
 
 
     def execute_task(self, task: Task, dst_name=None):
@@ -1106,7 +1109,7 @@ class ZAM_env(Env):
                                            val=(0, [task.trans_time, task.wait_time, task.exe_time]))
                         
                         #trust buffer appends new tasks
-                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag, task.exec_time, task.ddl])
+                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag, task.exe_time, task.ddl])
                         print(self.trust_messages)
                         task.deallocate()
 
