@@ -1,1 +1,1 @@
-from .node import WirelessNode, MobileNode, TrustNode, MaliciousNode
+from .node import WirelessNode, MobileNode, TrustNode, MaliciousNode, ZAMNode, ZAMMalicious
