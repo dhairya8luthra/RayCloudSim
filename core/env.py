@@ -448,8 +448,12 @@ class Env_Trust(Env):
         # Online Malicious Node: 1.0
         # Online Non-Malicious Node: -1.0
         while True:
+            status = [1.0 if isinstance(node, MaliciousNode) and node.get_online() else (-1.0 if node.get_online() else 0.0)
+                         for _, node in self.scenario.get_nodes().items()]
+            print(status)
+
             self.info4frame[self.now] = {
-                'node': {k: 0.0 if not node.get_online() else (1.0 if isinstance(node, MaliciousNode) else -1.0)
+                'node': {k: 1.0 if isinstance(node, MaliciousNode) and node.get_online() else (-1.0 if node.get_online() else 0.0)
                          for k, node in self.scenario.get_nodes().items()},
                 'edge': {str(k): 200.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
@@ -477,17 +481,20 @@ class Env_Trust(Env):
                         self.scenario.get_node(node.name).set_online(False)
                     continue
 
+                total_tasks = len(node.active_task_ids) + len(node.task_buffer.task_ids)
+
                 if node.get_online() \
-                        and node.task_buffer.free_size == node.task_buffer.max_size \
+                        and total_tasks == 0 \
                         and arrival_times[node.name][arrival_pointer[node.name]] - 2 > now:
-                    print(f"Node {node.name} is going at offline at {now}")
+                    print(f"Node {node.name} is going at offline at {now}, and has {total_tasks} tasks")
                     self.scenario.get_node(node.name).set_online(False)
 
                 # Toggle to Online if required
                 elif not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] - 2 <= now:
                     self.scenario.get_node(node.name).set_online(True)
                     print(f"Node {node.name} is going at online at {now}")
-                    arrival_pointer[node.name] += 1
+                    if arrival_times[node.name][arrival_pointer[node.name]] == now:
+                        arrival_pointer[node.name] += 1
 
 
         # if now in self.down:
