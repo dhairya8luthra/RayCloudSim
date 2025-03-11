@@ -28,13 +28,13 @@ def error_handler_2(error: Exception):
     exit()
 
 def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timers, now):
-    print(3, error, task_id, now)
     _, _, task_id = error.args[0]
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
 
     while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] < now:
         arrival_pointer[node] += 1
+    print(3, error, task_id, now)
 
 
 def main():
