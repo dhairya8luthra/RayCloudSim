@@ -67,7 +67,7 @@
             "ExeEnergyCoef": 0.27
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "TrustNode",
             "NodeName": "n6",
             "NodeId": 6,
             "MaxCpuFreq": 9,
@@ -111,7 +111,7 @@
             "ExeEnergyCoef": 0.88
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "TrustNode",
             "NodeName": "n10",
             "NodeId": 10,
             "MaxCpuFreq": 11,
