@@ -751,7 +751,7 @@ class Env_Trust(Env):
             yield self.controller.timeout(1)
 
 
-class ZAM_env(Env):
+class ZAM_env(Env_Trust):
 
     def __init__(self, scenario: BaseScenario, config_file):
         super().__init__(scenario, config_file)
@@ -768,7 +768,7 @@ class ZAM_env(Env):
         """Recorder the info required for simulation frames."""
         while True:
             self.info4frame[self.now] = {
-                'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
+                'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, ZAMMalicious) else 0.25)
                          for k, node in self.scenario.get_nodes().items()},
                 'edge': {str(k): 200.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
@@ -781,15 +781,6 @@ class ZAM_env(Env):
                 }
             yield self.controller.timeout(1)
 
-    def toggle_status(self):
-        
-        now = int(self.controller.now)
-        if now in self.down:
-            for node in self.down[now]:
-                self.scenario.get_node(node).set_online(False)
-        if now in self.up:
-            for node in self.up[now]:
-                self.scenario.get_node(node).set_online(True)
 
     def accumulate_PR(self, target: ZAMNode) -> float:
         total_trust = 0.0
@@ -849,10 +840,10 @@ class ZAM_env(Env):
         higher_bound = mean_trust + (THRESHOLD * std_trust)
         lower_bound = mean_trust - (THRESHOLD * std_trust)
 
-        for node, _ in self.global_trust.items():
-            trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0 else 0
-            if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
-                print(f"Malicious Node Detected: {node.node_id}")
+        # for node, _ in self.global_trust.items():
+        #     trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0 else 0
+        #     if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
+        #         print(f"Malicious Node Detected: {node.node_id}")
 
     def computeQoS(self):
 
@@ -876,15 +867,17 @@ class ZAM_env(Env):
 
             # Update the task counters
             if exec_flag == FLAG_TASK_EXECUTION_DONE or exec_flag == FLAG_TASK_EXECUTION_FAIL:
-                dst.set_total_tasks(dst.get_total_tasks() + 1)
+                dst.set_total_tasks(dst.get_total_tasks() + 1.0)
                 if exec_flag == FLAG_TASK_EXECUTION_DONE:
-                    dst.set_successful_tasks(dst.get_successful_tasks() + 1)
+                    dst.set_successful_tasks(dst.get_successful_tasks() + 1.0)
+            else:
+                continue
 
             # Update the QoS Values
             exec_time = message[4]
             ddl = message[5]
-            if dst.get_total_tasks() != 0 or ddl != 0:
-                dst.set_QoS((lambda_task * (dst.get_successful_tasks() / dst.get_total_task)) + (lambda_time * (1 - (exec_time / ddl))))
+            if dst.get_total_tasks() != 0 and ddl != 0:
+                dst.set_QoS((lambda_task * (dst.get_successful_tasks() / dst.get_total_tasks())) + (lambda_time * (1.0 - (exec_time / ddl))))
             print(f"QoS of {dst.name} Updated: {oldQos} -> {dst.get_QoS()}")
 
         # Clear the trust messages
