@@ -19,14 +19,16 @@ from examples.scenarios.zam_scenario import Scenario
 
 
 def error_handler_1(error: Exception):
-    print(error)
+    print(1)
 
 def error_handler_2(error: Exception):
     print(2)
 
 def error_handler_3(error: Exception):
-    print(3)
+    print(error)
 
+def error_handler_4(error: Exception):
+    print(4)
 
 def main():
     # Create the Env
@@ -71,16 +73,17 @@ def main():
                 error_handler_1(e)
 
             try:
-                env.toggle_status()
+                env.computeQoS()
             except Exception as e:
                 error_handler_2(e)
 
             try:
                 env.run(until=until)
             except Exception as e:
-                error_handler_3(e)
+                error_handler_4(e)
 
             until += 1
+            print(until)
 
     # Continue the simulation until the last task successes/fails.
     while env.process_task_cnt < len(simulated_tasks):
@@ -96,9 +99,14 @@ def main():
             error_handler_2(e)
 
         try:
-            env.run(until=until)
+            env.computeQoS()
         except Exception as e:
             error_handler_3(e)
+
+        try:
+            env.run(until=until)
+        except Exception as e:
+            error_handler_4(e)
 
     env.close()
 
