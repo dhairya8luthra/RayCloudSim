@@ -283,16 +283,16 @@ class ZAMNode(Node):
         self.successful_tasks = 0
         self.total_tasks = 0
 
-    def get_successful_task(self) -> float:
+    def get_successful_tasks(self) -> float:
         return self.successful_tasks
 
-    def set_succesful_task(self, successful_tasks: float):
+    def set_successful_tasks(self, successful_tasks: float):
         self.successful_tasks = successful_tasks
 
-    def get_total_task(self) -> float:
+    def get_total_tasks(self) -> float:
         return self.total_tasks
     
-    def set_total_task(self, total_tasks: float):
+    def set_total_tasks(self, total_tasks: float):
         self.total_tasks = total_tasks
 
     def get_QoS(self) -> float:
