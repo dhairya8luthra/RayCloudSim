@@ -444,9 +444,12 @@ class Env_Trust(Env):
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
+        # Offline Node: 0.0
+        # Online Malicious Node: 1.0
+        # Online Non-Malicious Node: -1.0
         while True:
             self.info4frame[self.now] = {
-                'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
+                'node': {k: 0.0 if not node.get_online() else (1.0 if isinstance(node, MaliciousNode) else -1.0)
                          for k, node in self.scenario.get_nodes().items()},
                 'edge': {str(k): 200.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
                          for k, link in self.scenario.get_links().items()},
@@ -459,15 +462,40 @@ class Env_Trust(Env):
                 }
             yield self.controller.timeout(1)
 
-    def toggle_status(self):
+    def toggle_status(self, arrival_times, arrival_pointer):
         
         now = int(self.controller.now)
-        if now in self.down:
-            for node in self.down[now]:
-                self.scenario.get_node(node).set_online(False)
-        if now in self.up:
-            for node in self.up[now]:
-                self.scenario.get_node(node).set_online(True)
+
+        for _, node in self.scenario.get_nodes().items():
+            # Check the buffers of each node
+            if isinstance(node, TrustNode):
+                # Toggle to Offline if required
+
+                if len(arrival_times[node.name]) == arrival_pointer[node.name]:
+                    if node.get_online():
+                        print(f"Node {node.name} is going at offline at {now}")
+                        self.scenario.get_node(node.name).set_online(False)
+                    continue
+
+                if node.get_online() \
+                        and node.task_buffer.free_size == node.task_buffer.max_size \
+                        and arrival_times[node.name][arrival_pointer[node.name]] - 2 > now:
+                    print(f"Node {node.name} is going at offline at {now}")
+                    self.scenario.get_node(node.name).set_online(False)
+
+                # Toggle to Online if required
+                elif not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] - 2 <= now:
+                    self.scenario.get_node(node.name).set_online(True)
+                    print(f"Node {node.name} is going at online at {now}")
+                    arrival_pointer[node.name] += 1
+
+
+        # if now in self.down:
+        #     for node in self.down[now]:
+        #         self.scenario.get_node(node).set_online(False)
+        # if now in self.up:
+        #     for node in self.up[now]:
+        #         self.scenario.get_node(node).set_online(True)
 
     def compute_trust(self):
 
@@ -701,7 +729,7 @@ class Env_Trust(Env):
                 flag_exec = FLAG_TASK_EXECUTION_DONE
 
             if flag_exec == FLAG_TASK_EXECUTION_FAIL:
-                print("Attack Attack Attack....")
+                print("Attack Attack Attack...")
 
             self.done_task_collector.put(
                 (task.task_id,
@@ -762,7 +790,7 @@ class ZAM_env(Env_Trust):
         self.ONLINE_NODES = [node for _, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
         self.trust_messages = []
-        self.global_trust = {node: 0.0 for _, node in self.scenario.get_nodes().items()}
+        self.global_trust = {node: 0.00000001 for _, node in self.scenario.get_nodes().items()}
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -783,67 +811,83 @@ class ZAM_env(Env_Trust):
 
 
     def accumulate_PR(self, target: ZAMNode) -> float:
-        total_trust = 0.0
-        for node, trust in self.global_trust.items() and node != target:
-            total_trust += trust
 
-        trust_weights = {node: trust / total_trust for node, trust in self.global_trust.items() and node != target}
-        
+        total_trust = 0.0
+        for node, trust in self.global_trust.items():
+            if node != target:
+                total_trust += trust
+
+        trust_weights = {node: trust / total_trust for node, trust in self.global_trust.items() if node != target}
+
         accumulate = 0.0
-        for _, node in self.scenario.get_nodes().items() and node != target:
-            if isinstance(node, ZAMNode):
-                accumulate += node.peerRating[target] * trust_weights[node]
+        for node in self.scenario.get_nodes().values():
+            if node != target and isinstance(node, ZAMNode):
+                peerRating = 0.0
+                trust_w = 0.0
+                if (node.peerRating.get(target.name) == None):
+                    print("Key Error for the node type:", type(target), "Size:", len(node.peerRating))
+                peerRating = node.peerRating[target.name]
+                trust_w = trust_weights[node]
+
+                accumulate += peerRating * trust_w
 
         return accumulate
 
     def compute_final(self, target: ZAMNode) -> float:
-        ALPHA = 0.5
+        ALPHA = 0.7
         BETA = 0.3
-        GAMMA = 0.2
 
         t_old = self.global_trust[target]
         peerRating = self.accumulate_PR(target)
-        print("12")
-
-        t_final = (ALPHA * target.get_QoS()) + (BETA * t_old) + (GAMMA * peerRating)
+        t_final = (ALPHA * target.get_QoS()) + (BETA * peerRating)
 
         return t_final
 
     def compute_trust(self):
 
-        # Example trust updates
-        TRUST_INCREASE = 0.1
-        TRUST_DECREASE = -0.2
-        TRUST_DECREASE_SMALL = -0.1
-        NO_CHANGE = 0.0
-
-        THRESHOLD = 1.2
+        THRESHOLD = 1.5
 
         # Update over all the nodes
         for _, target in self.scenario.get_nodes().items():
             
             OLD_WEIGHT = 0.8
-            COMPUTE_WEIGHT = 1 - OLD_WEIGHT
-           
+            COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
+
             if isinstance(target, ZAMNode):
                 old_trust = self.global_trust[target]
                 compute_trust = self.compute_final(target)
-                print("1")
                 new_trust = (OLD_WEIGHT * old_trust) + (COMPUTE_WEIGHT * compute_trust)
+                if(new_trust > 1.0):
+                    new_trust = 1.0
+                    print("Trust Value Exceeded 1.0")
                 self.global_trust[target] = new_trust
+                print(new_trust)
 
         # Label the malicious
         trust_list = np.array([trust for _, trust in self.global_trust.items()])
         mean_trust = trust_list.mean()
         std_trust = trust_list.std()
 
-        higher_bound = mean_trust + (THRESHOLD * std_trust)
-        lower_bound = mean_trust - (THRESHOLD * std_trust)
+        higher_bound = mean_trust + 2 * (THRESHOLD * std_trust)
+        lower_bound = mean_trust - 2 * (THRESHOLD * std_trust)
 
-        # for node, _ in self.global_trust.items():
-        #     trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0 else 0
-        #     if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
-        #         print(f"Malicious Node Detected: {node.node_id}")
+        print("----------------------------------------------------")
+        print("Higher Bound", higher_bound, "Lower Bound", lower_bound)
+        trusts = [trust for _, trust in self.global_trust.items()]
+        print(trusts)
+
+        print("=== Z-Scores ===")
+        for node, _ in self.global_trust.items():
+            trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0.0 else 0.0
+            print(trust)
+
+        print("=== ===")
+
+        for node, _ in self.global_trust.items():
+            trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0.0 else 0.0
+            if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
+                print(f"Malicious Node Detected: {node.node_id}")
+        print("----------------------------------------------------")
 
     def computeQoS(self):
 
@@ -1066,7 +1110,7 @@ class ZAM_env(Env_Trust):
 
             node = self.scenario.get_node(task.dst_name)
 
-            if isinstance(node, MaliciousNode):
+            if isinstance(node, ZAMMalicious):
                 flag_exec = node.execute_on_and_off_attack()
             else:
                 flag_exec = FLAG_TASK_EXECUTION_DONE
