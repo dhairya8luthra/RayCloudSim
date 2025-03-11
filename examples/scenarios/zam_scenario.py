@@ -1,10 +1,9 @@
-from RayCloudSim.zoo.node import ZAMMalicious, ZAMNode
+from zoo import ZAMNode, ZAMMalicious
 from core.base_scenario import BaseScenario
 from core.infrastructure import Node, Location
 
-
 class Scenario(BaseScenario):
-    """A Simple trust based-scenario"""
+    """A ZAM trust based-scenario"""
 
     def init_infrastructure_nodes(self):
         
