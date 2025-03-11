@@ -481,19 +481,22 @@ class Env_Trust(Env):
                         self.scenario.get_node(node.name).set_online(False)
                     continue
 
-                total_tasks = len(node.active_task_ids) + len(node.task_buffer.task_ids)
+                total_tasks = len(node.active_task_ids)
+
+                if total_tasks == 0:
+                    print(f"Nearest Task {arrival_times[node.name][arrival_pointer[node.name]]}, Timestamp: {now}")
 
                 if node.get_online() \
                         and total_tasks == 0 \
-                        and arrival_times[node.name][arrival_pointer[node.name]] - 2 > now:
+                        and arrival_times[node.name][arrival_pointer[node.name]] - 2 >= now:
                     print(f"Node {node.name} is going at offline at {now}, and has {total_tasks} tasks")
                     self.scenario.get_node(node.name).set_online(False)
 
                 # Toggle to Online if required
-                elif not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] - 2 <= now:
+                elif not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] - 2 < now:
                     self.scenario.get_node(node.name).set_online(True)
                     print(f"Node {node.name} is going at online at {now}")
-                    if arrival_times[node.name][arrival_pointer[node.name]] == now:
+                    while arrival_pointer[node.name] < len(arrival_times[node.name]) and arrival_times[node.name][arrival_pointer[node.name]] < now:
                         arrival_pointer[node.name] += 1
 
 
