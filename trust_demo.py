@@ -32,7 +32,7 @@ def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timer
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
 
-    while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] < now:
+    while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] <= now + 2:
         arrival_pointer[node] += 1
     print(3, error, task_id, now)
 
@@ -100,8 +100,9 @@ def main():
             except Exception as e:
                 error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
 
+            print(arrival_times['n1'], arrival_pointer['n1'], env.now, len(env.scenario.get_node('n1').task_buffer.task_ids[:]))
             until += 1
-            # time.sleep(0.2)
+        # time.sleep(0.2)
 
     # Continue the simulation until the last task successes/fails.
     while env.process_task_cnt < len(simulated_tasks):

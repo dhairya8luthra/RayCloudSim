@@ -482,9 +482,16 @@ class Env_Trust(Env):
                     continue
 
                 total_tasks = len(node.task_buffer.task_ids[:]) + len(node.active_task_ids)
+                print(f"Nearest Task {arrival_times[node.name][arrival_pointer[node.name]]}, Length: {len(arrival_times[node.name])}, Pointer: {arrival_pointer[node.name]}, Timestamp: {now}")
 
-                if total_tasks == 0:
-                    print(f"Nearest Task {arrival_times[node.name][arrival_pointer[node.name]]}, Timestamp: {now}")
+                if total_tasks == 0 and node.name == 'n1':
+                    print(f"Not Cringe, total_tasks: {total_tasks}")
+                    print(arrival_pointer[node.name] < len(arrival_times[node.name]))
+                    print(arrival_times[node.name][arrival_pointer[node.name]] <= now)
+                elif node.name == 'n1':
+                    print(f"Cringe, total_tasks: {total_tasks}")
+                    print("pointer", arrival_pointer[node.name] < len(arrival_times[node.name]))
+                    print("arrival", arrival_times[node.name][arrival_pointer[node.name]] <= now)
 
                 if node.get_online() \
                         and total_tasks == 0 \
@@ -493,10 +500,10 @@ class Env_Trust(Env):
                     self.scenario.get_node(node.name).set_online(False)
 
                 # Toggle to Online if required
-                if not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] - 2 <= now:
+                if not node.get_online() and arrival_times[node.name][arrival_pointer[node.name]] <= now + 2 :
                     self.scenario.get_node(node.name).set_online(True)
                     print(f"Node {node.name} is going at online at {now}")
-                    while arrival_pointer[node.name] < len(arrival_times[node.name]) and arrival_times[node.name][arrival_pointer[node.name]] - 2 <= now:
+                    while arrival_pointer[node.name] < len(arrival_times[node.name]) and arrival_times[node.name][arrival_pointer[node.name]] <= now + 2:
                         arrival_pointer[node.name] += 1
 
 
@@ -770,7 +777,6 @@ class Env_Trust(Env):
                         
                         #trust buffer appends new tasks
                         self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag])
-                        print(self.trust_messages)
                         task.deallocate()
 
                         del self.active_task_dict[task_id]
@@ -1157,7 +1163,6 @@ class ZAM_env(Env_Trust):
                         
                         #trust buffer appends new tasks
                         self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag, task.exe_time, task.ddl])
-                        print(self.trust_messages)
                         task.deallocate()
 
                         del self.active_task_dict[task_id]
