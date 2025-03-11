@@ -1,6 +1,7 @@
 import json
 import os
 import simpy
+import numpy as np
 import networkx as nx
 
 from typing import Optional, Tuple
@@ -9,7 +10,7 @@ from core.base_scenario import BaseScenario
 from core.infrastructure import Link
 from core.task import Task
 
-from zoo.node import MaliciousNode, TrustNode
+from zoo.node import MaliciousNode, TrustNode, ZAMNode, ZAMMalicious
 
 __all__ = ["EnvLogger", "Env", "Env_Trust"]
 
@@ -427,6 +428,7 @@ class Env:
 
         self.logger.log("Simulation completed!")
 
+
 class Env_Trust(Env):
 
     def __init__(self, scenario: BaseScenario, config_file):
@@ -490,17 +492,19 @@ class Env_Trust(Env):
             task_id = message[2]
             net_score = src.get_trust_score(dst)
 
+            exec_flag = message[3]
+
             # Check the message type for each message
-            if message[3] == FLAG_TASK_EXECUTION_DONE:
+            if exec_flag == FLAG_TASK_EXECUTION_DONE:
                 # Trust Value increase
                 net_score += TRUST_INCREASE  
-            elif message[3] == FLAG_TASK_EXECUTION_FAIL:
+            elif exec_flag == FLAG_TASK_EXECUTION_FAIL:
                 net_score += TRUST_DECREASE
-            elif message[3] == FLAG_TASK_EXECUTION_TIMEOUT:
+            elif exec_flag == FLAG_TASK_EXECUTION_TIMEOUT:
                 net_score += TRUST_DECREASE_SMALL 
-            elif message[3] == FLAG_TASK_EXECUTION_NET_CONGESTION:
+            elif exec_flag == FLAG_TASK_EXECUTION_NET_CONGESTION:
                  net_score += NO_CHANGE # Trust Value no change
-            elif message[3] == FLAG_TASK_INSUFFICIENT_BUFFER:
+            elif exec_flag == FLAG_TASK_INSUFFICIENT_BUFFER:
                  net_score += NO_CHANGE # Trust Value no change
 
             src.set_trust_score(dst, net_score)
@@ -746,4 +750,378 @@ class Env_Trust(Env):
 
             yield self.controller.timeout(1)
 
+
+class ZAM_env(Env):
+
+    def __init__(self, scenario: BaseScenario, config_file):
+        super().__init__(scenario, config_file)
+        self.down = {}
+        self.up = {}
+        self.down.setdefault(self.controller.now, [])
+        self.up.setdefault(self.controller.now, [])
+        self.ONLINE_NODES = [node for _, node in self.scenario.get_nodes().items() if node.get_online()]
+        self.ACTIVE_NODES = []
+        self.trust_messages = []
+        self.global_trust = {node: 0.0 for _, node in self.scenario.get_nodes().items()}
+
+    def info4frame_clock(self):
+        """Recorder the info required for simulation frames."""
+        while True:
+            self.info4frame[self.now] = {
+                'node': {k: 0.0 if not node.get_online() else (0.75 if isinstance(node, MaliciousNode) else 0.25)
+                         for k, node in self.scenario.get_nodes().items()},
+                'edge': {str(k): 200.0 * link.quantify_bandwidth() if (link.src.get_online() and link.dst.get_online()) else 0.0
+                         for k, link in self.scenario.get_links().items()},
+            }
+            if len(self.config['VisFrame']['TargetNodeList']) > 0:
+                self.info4frame[self.now]['target'] = {
+                    item: [self.scenario.get_node(item).active_task_ids[:], 
+                           self.scenario.get_node(item).task_buffer.task_ids[:]]
+                    for item in self.config['VisFrame']['TargetNodeList']
+                }
+            yield self.controller.timeout(1)
+
+    def toggle_status(self):
         
+        now = int(self.controller.now)
+        if now in self.down:
+            for node in self.down[now]:
+                self.scenario.get_node(node).set_online(False)
+        if now in self.up:
+            for node in self.up[now]:
+                self.scenario.get_node(node).set_online(True)
+
+    def accumulate_PR(self, target: ZAMNode) -> float:
+        total_trust = 0.0
+        for node, trust in self.global_trust.items() and node != target:
+            total_trust += trust
+
+        trust_weights = {node: trust / total_trust for node, trust in self.global_trust.items() and node != target}
+        
+        accumulate = 0.0
+        for _, node in self.scenario.get_nodes().items() and node != target:
+            if isinstance(node, ZAMNode):
+                accumulate += node.peerRating[target] * trust_weights[node]
+
+        return accumulate
+
+    def compute_final(self, target: ZAMNode) -> float:
+        ALPHA = 0.5
+        BETA = 0.3
+        GAMMA = 0.2
+
+        t_old = self.global_trust[target]
+        peerRating = self.accumulate_PR(target)
+        print("12")
+
+        t_final = (ALPHA * target.get_QoS()) + (BETA * t_old) + (GAMMA * peerRating)
+
+        return t_final
+
+    def compute_trust(self):
+
+        # Example trust updates
+        TRUST_INCREASE = 0.1
+        TRUST_DECREASE = -0.2
+        TRUST_DECREASE_SMALL = -0.1
+        NO_CHANGE = 0.0
+
+        THRESHOLD = 1.2
+
+        # Update over all the nodes
+        for _, target in self.scenario.get_nodes().items():
+            
+            OLD_WEIGHT = 0.8
+            COMPUTE_WEIGHT = 1 - OLD_WEIGHT
+           
+            if isinstance(target, ZAMNode):
+                old_trust = self.global_trust[target]
+                compute_trust = self.compute_final(target)
+                print("1")
+                new_trust = (OLD_WEIGHT * old_trust) + (COMPUTE_WEIGHT * compute_trust)
+                self.global_trust[target] = new_trust
+
+        # Label the malicious
+        trust_list = np.array([trust for _, trust in self.global_trust.items()])
+        mean_trust = trust_list.mean()
+        std_trust = trust_list.std()
+
+        higher_bound = mean_trust + (THRESHOLD * std_trust)
+        lower_bound = mean_trust - (THRESHOLD * std_trust)
+
+        for node, _ in self.global_trust.items():
+            trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0 else 0
+            if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
+                print(f"Malicious Node Detected: {node.node_id}")
+
+    def computeQoS(self):
+
+        lambda_task = 0.7
+        lambda_time = 0.3
+
+        # Iterate over the trust messages
+        for message in self.trust_messages:
+            dst = self.scenario.get_node(message[1])
+            if isinstance(dst, ZAMNode):
+                if dst.get_online == False:
+                    print(f"Node {dst.name} is offline")
+                    continue
+
+            if message[1] == None:
+                print(message[2], "Error in dst node")
+                continue
+            oldQos = dst.get_QoS()
+            
+            exec_flag = message[3]
+
+            # Update the task counters
+            if exec_flag == FLAG_TASK_EXECUTION_DONE or exec_flag == FLAG_TASK_EXECUTION_FAIL:
+                dst.set_total_task(dst.get_total_task() + 1)
+                if exec_flag == FLAG_TASK_EXECUTION_DONE:
+                    dst.set_succesful_task(dst.get_successful_tasks() + 1)
+
+            # Update the QoS Values
+            exec_time = message[4]
+            ddl = message[5]
+            if dst.get_total_task != 0  or ddl != 0:
+                dst.set_QoS((lambda_task * (dst.get_successful_task() / dst.get_total_task)) + (lambda_time * (1 - (exec_time / ddl))))
+            print(f"Qos of {dst.name} Updated: {oldQos} -> {dst.get_QoS()}")
+
+
+    def execute_task(self, task: Task, dst_name=None):
+        """Transmission and Execution logics.
+
+        dst_name=None means the task is popped from the waiting deque.
+        """
+        # DuplicateTaskIdError check
+        if task.task_id in self.active_task_dict.keys():
+            self.process_task_cnt += 1
+            self.logger.append(info_type='task', 
+                               key=task.task_id, 
+                               val=(1, ['DuplicateTaskIdError',]))
+            # self.processed_tasks.append(task.task_id)
+            log_info = f"**DuplicateTaskIdError: Task {{{task.task_id}}}** " \
+                       f"new task (name {{{task.task_name}}}) with a " \
+                       f"duplicate task id {{{task.task_id}}}."
+            self.logger.log(log_info)
+            raise AssertionError(
+                ('DuplicateTaskIdError', log_info, task.task_id)
+            )
+
+        # Check whether the task is re-activated from queuing
+        flag_reactive = True if dst_name is None else False
+
+        if flag_reactive:
+            dst = task.dst
+        else:
+            self.logger.log(f"Task {{{task.task_id}}} generated in "
+                            f"Node {{{task.src_name}}}")
+            dst = self.scenario.get_node(dst_name)
+
+        if not flag_reactive:
+            # Do task transmission, if necessary
+            if dst_name != task.src_name:  # task transmission
+                try:
+                    links_in_path = self.scenario.infrastructure.\
+                        get_shortest_links(task.src_name, dst_name)
+                # NetworkXNoPathError check
+                except nx.exception.NetworkXNoPath:
+                    self.process_task_cnt += 1
+                    self.logger.append(info_type='task', 
+                                       key=task.task_id, 
+                                       val=(1, ['NetworkXNoPathError',]))
+                    # self.processed_tasks.append(task.task_id)
+                    log_info = f"**NetworkXNoPathError: Task " \
+                               f"{{{task.task_id}}}** Node {{{dst_name}}} " \
+                               f"is inaccessible"
+                    self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NO_PATH, -1, task.ddl])
+                    self.logger.log(log_info)
+                    raise EnvironmentError(
+                        ('NetworkXNoPathError', log_info, task.task_id)
+                    )
+                # IsolatedWirelessNode check
+                except EnvironmentError as e:
+                    message = e.args[0]
+                    if message[0] == 'IsolatedWirelessNode':
+                        self.process_task_cnt += 1
+                        self.logger.append(info_type='task', 
+                                           key=task.task_id, 
+                                           val=(1, ['IsolatedWirelessNode',]))
+                        # self.processed_tasks.append(task.task_id)
+                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_ISOLATED_WIRELESS_NODE, -1, task.ddl])
+                        log_info = f"**IsolatedWirelessNode"
+                        self.logger.log(log_info)
+                        raise e
+
+                for link in links_in_path:
+                    if isinstance(link, Link):
+                        # NetCongestionError check
+                        if link.free_bandwidth < task.trans_bit_rate:
+                            self.process_task_cnt += 1
+                            self.logger.append(info_type='task', 
+                                               key=task.task_id, 
+                                               val=(1, ['NetCongestionError',]))
+                            # self.processed_tasks.append(task.task_id)
+                            log_info = f"**NetCongestionError: Task " \
+                                       f"{{{task.task_id}}}** network " \
+                                       f"congestion Node {{{task.src_name}}} " \
+                                       f"--> {{{dst_name}}}"
+                            self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NET_CONGESTION, -1, task.ddl])
+                            self.logger.log(log_info)
+                            raise EnvironmentError(
+                                ('NetCongestionError', log_info, task.task_id)
+                            )
+
+                task.trans_time = 0
+
+                # ---- Customize the wired/wireless transmission mode here ----
+                # wireless transmission:
+                if isinstance(links_in_path[0], Tuple):
+                    wireless_src_name, wired_dst_name = links_in_path[0]
+                    # task.trans_time += func(task, wireless_src_name,
+                    #                         wired_dst_name)  # TODO
+                    task.trans_time += 0  # (currently only a toy model)
+                    links_in_path = links_in_path[1:]
+                if isinstance(links_in_path[-1], Tuple):
+                    wired_src_name, wireless_dst_name = links_in_path[-1]
+                    # task.trans_time += func(task, wired_src_name,
+                    #                         wireless_dst_name)  # TODO
+                    task.trans_time += 0  # (currently only a toy model)
+                    links_in_path = links_in_path[:-1]
+
+                # wired transmission:
+                # 0. base latency
+                trans_base_latency = 0
+                for link in links_in_path:
+                    trans_base_latency += link.base_latency
+                task.trans_time += trans_base_latency
+                # Multi-hop
+                task.trans_time += (task.task_size / task.trans_bit_rate) * len(links_in_path)
+                # -------------------------------------------------------------
+
+                self.scenario.send_data_flow(task.trans_flow, links_in_path)
+
+                try:
+                    self.logger.log(f"Task {{{task.task_id}}}: "
+                                    f"{{{task.src_name}}} --> {{{dst_name}}}")
+                    yield self.controller.timeout(task.trans_time)
+                    task.trans_flow.deallocate()
+                    self.logger.log(f"Task {{{task.task_id}}} arrived "
+                                    f"Node {{{dst_name}}} with "
+                                    f"{{{task.trans_time:.2f}}}s")
+                except simpy.Interrupt:
+                    pass
+            else:
+                task.trans_time = 0  # To avoid task.trans_time = -1
+
+        # Task execution
+        if not dst.free_cpu_freq > 0:
+            # InsufficientBufferError check
+            try:
+                task.allocate(self.now, dst, pre_allocate=True)
+                dst.append_task(task)
+                self.logger.log(f"Task {{{task.task_id}}} is buffered in "
+                                f"Node {{{task.dst_name}}}")
+                return
+            except EnvironmentError as e:
+                self.process_task_cnt += 1
+                self.logger.append(info_type='task', 
+                                   key=task.task_id, 
+                                   val=(1, ['InsufficientBufferError',]))
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_INSUFFICIENT_BUFFER, -1, task.ddl])
+                # self.processed_tasks.append(task.task_id)
+                self.logger.log(e.args[0][1])
+                raise e
+
+        # ------------ Customize the execution mode here ------------
+        if flag_reactive:
+            # TimeoutError check
+            try:
+                task.allocate(self.now)
+            except EnvironmentError as e:  # TimeoutError
+                self.process_task_cnt += 1
+                self.logger.append(info_type='task', 
+                                   key=task.task_id, 
+                                   val=(1, ['TimeoutError',]))
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_EXECUTION_TIMEOUT, task.ddl, task.ddl])
+                # self.processed_tasks.append(task.task_id)
+                self.logger.log(e.args[0][1])
+
+                # Activate a queued task
+                waiting_task = task.dst.pop_task()
+                if waiting_task:
+                    self.process(task=waiting_task)
+                
+                raise e
+            
+            self.logger.log(f"Task {{{task.task_id}}} re-actives in "
+                            f"Node {{{task.dst_name}}}, "
+                            f"waiting {{{(task.wait_time - task.trans_time):.2f}}}s")
+        else:
+            task.allocate(self.now, dst)
+        # -----------------------------------------------------------
+
+        # Mark the task as active (i.e., execution status) task
+        self.active_task_dict[task.task_id] = task
+        try:
+            self.logger.log(f"Processing Task {{{task.task_id}}} in"
+                            f" {{{task.dst_name}}}")
+            yield self.controller.timeout(task.exe_time)
+
+            node = self.scenario.get_node(task.dst_name)
+
+            if isinstance(node, MaliciousNode):
+                flag_exec = node.execute_on_and_off_attack()
+            else:
+                flag_exec = FLAG_TASK_EXECUTION_DONE
+
+            if flag_exec == FLAG_TASK_EXECUTION_FAIL:
+                print("Attack Attack Attack....")
+
+            self.done_task_collector.put(
+                (task.task_id,
+                 flag_exec,
+                 [dst_name, user_defined_info()]))
+        except simpy.Interrupt:
+            pass
+
+    def monitor_on_done_task_collector(self):
+        """Keep watch on the done_task_collector."""
+        while True:
+            if len(self.done_task_collector.items) > 0:
+                while len(self.done_task_collector.items) > 0:
+                    task_id, flag, info = self.done_task_collector.get().value
+                    self.done_task_info.append((self.now, task_id, flag, info))
+
+                    if flag == FLAG_TASK_EXECUTION_DONE or flag == FLAG_TASK_EXECUTION_FAIL:
+                        task = self.active_task_dict[task_id]
+
+                        waiting_task = task.dst.pop_task()
+
+                        self.logger.log(f"Task {{{task_id}}} accomplished in "
+                                        f"Node {{{task.dst_name}}} with "
+                                        f"{{{task.exe_time:.2f}}}s")
+                        self.logger.append(info_type='task', 
+                                           key=task.task_id, 
+                                           val=(0, [task.trans_time, task.wait_time, task.exe_time]))
+                        
+                        #trust buffer appends new tasks
+                        self.trust_messages.append([task.src_name, task.dst_name, task.task_id, flag, task.exec_time, task.ddl])
+                        print(self.trust_messages)
+                        task.deallocate()
+
+                        del self.active_task_dict[task_id]
+                        self.process_task_cnt += 1
+                        # self.processed_tasks.append(task.task_id)
+
+                        if waiting_task:
+                            self.process(task=waiting_task)
+
+                    else:
+                        raise ValueError("Invalid flag!")
+            else:
+                self.done_task_info = []
+                # self.logger.log("")  # turn on: log on every time slot
+
+            yield self.controller.timeout(1)
+    

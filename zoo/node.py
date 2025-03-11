@@ -199,6 +199,7 @@ class TrustNode(Node):
         """
         return self.trust_mat.get(other_node.name, 0.0)
 
+
 class MaliciousNode(TrustNode):
     """Malicious Node.
 
@@ -221,7 +222,7 @@ class MaliciousNode(TrustNode):
                          idle_energy_coef, exe_energy_coef)
         
         self.malicious_type = mal_type
-        self.good_karma = 0
+        self.normal_threshold = 0
 
     def set_malicious_type(self, mal_type: int):
         self.malicious_type = mal_type
@@ -237,12 +238,141 @@ class MaliciousNode(TrustNode):
             threshold: The trust threshold to trigger the attack.
             delay: The amount of delay to introduce.
         """
-        if self.good_karma >= 2:
+        if self.normal_threshold >= 2:
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
-            self.good_karma = 0
+            self.normal_threshold = 0
             return 1
         else:
             # Increase Karma
-            self.good_karma += 1
+            self.normal_threshold += 1
+            return 0
+
+
+class ZAMNode(Node):
+    """Node with trust attributes.
+
+    (1) Maintains the trust of all the neighboring nodes
+    (2) Trust level is updated based on the trust of the neighboring nodes
+
+    Attributes:
+        default attributes from parent class Node
+        trust_mat: trust matrix of all the nodes of the topology
+        online: online status
+        downtimes: downtimes of the node
+        malicious: malicious status
+    """
+
+    def __init__(self, node_id: int, name: str,
+                 max_cpu_freq: float,
+                 max_buffer_size: Optional[int] = 0,
+                 location: Optional[Location] = None,
+                 idle_energy_coef: Optional[float] = 0, 
+                 exe_energy_coef: Optional[float] = 0):
+        super().__init__(node_id, name, 
+                         max_cpu_freq, max_buffer_size, 
+                         location, 
+                         idle_energy_coef, exe_energy_coef)
+
+        # dynamic attributes
+        self.peerRating = {}
+        self.online = True
+        self.QoS = 0.0
+        
+        # For QoS Calculation
+        self.successful_tasks = 0
+        self.total_tasks = 0
+
+    def get_successful_task(self) -> float:
+        return self.successful_tasks
+
+    def set_succesful_task(self, successful_tasks: float):
+        self.successful_tasks = successful_tasks
+
+    def get_total_task(self) -> float:
+        return self.total_tasks
+    
+    def set_total_task(self, total_tasks: float):
+        self.total_tasks = total_tasks
+
+    def get_QoS(self) -> float:
+        return self.QoS
+    
+    def set_QoS(self, QoS: float):
+        self.QoS = QoS
+
+    def set_online(self, status: bool):
+        self.online = status
+
+    def get_online(self) -> bool:
+        return self.online
+
+    def set_trust_score(self, other_node: "Node", score: float):
+        """Set the trust score for another node.
+        
+        Args:
+            other_node: The node for which the trust score is being set.
+            score: A float representing the trust level (e.g., between 0 and 1).
+        """
+        if score <= 1.0:
+            self.peerRating[other_node.name] = score
+        else:
+            self.peerRating[other_node.name] = 1.0
+
+    def get_trust_score(self, other_node: "Node") -> float:
+        """Retrieve the trust score for another node.
+        
+        Args:
+            other_node: The node whose trust score is requested.
+        
+        Returns:
+            The trust score if it exists, otherwise 0.0.
+        """
+        return self.peerRating.get(other_node.name, 0.0)
+    
+
+class ZAMMalicious(ZAMNode):
+    """Malicious Node.
+
+    (1) Node with malicious tendency
+    (2) Malicious nodes can be of different types
+    """
+
+    def __init__(self, node_id: int, name: str,
+                 mal_type: int,
+                 max_cpu_freq: float,
+                 max_buffer_size: Optional[int] = 0,
+                 location: Optional[Location] = None,
+                 idle_energy_coef: Optional[float] = 0, 
+                 exe_energy_coef: Optional[float] = 0):
+        super().__init__(node_id, name, 
+                         max_cpu_freq, max_buffer_size, 
+                         location, 
+                         idle_energy_coef, exe_energy_coef)
+        
+        self.malicious_type = mal_type
+        self.normal_threshold = 0
+
+    def set_malicious_type(self, mal_type: int):
+        self.malicious_type = mal_type
+
+    def get_malicious_type(self) -> int:
+        return self.malicious_type
+    
+    # Function for On-and-Off Attacks in trust based-environments delaying execution after crossing a certain threshold
+    def execute_on_and_off_attack(self) ->  int:
+        """Execute an on-and-off attack by delaying execution after crossing a certain threshold.
+        
+        Args:
+            threshold: The trust threshold to trigger the attack.
+            delay: The amount of delay to introduce.
+        """
+        if self.normal_threshold >= 2:
+            # generate a random sleep
+            delay = random.uniform(0.05, 0.1)
+            self.normal_threshold = 0
+            return 1
+        else:
+            # Increase Karma
+            self.normal_threshold += 1
             return 0
