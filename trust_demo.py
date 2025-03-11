@@ -3,6 +3,8 @@ Example simulation with additional trust metric
 """
 import os
 import sys
+import time
+
 
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
@@ -19,13 +21,13 @@ from examples.scenarios.trust_scenario_1 import Scenario
 
 
 def error_handler_1(error: Exception):
-    print(1)
+    print(1, error)
 
 def error_handler_2(error: Exception):
-    print(2)
+    print(2, error)
 
 def error_handler_3(error: Exception):
-    print(3)
+    print(3, error)
 
 
 def main():
@@ -38,6 +40,15 @@ def main():
     data = pd.read_csv("examples/dataset/task_dataset.csv")
     simulated_tasks = list(data.iloc[:].values)
     n_tasks = len(simulated_tasks)
+
+    # Check the arrival times of tasks for each node
+    arrival_times = {node.name: [] for _, node in env.scenario.get_nodes().items()}
+    arrival_pointer = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
+
+
+    # The Task are already sorted by generation time
+    for task_info in simulated_tasks:
+        arrival_times[task_info[8]].append(task_info[1])
 
     # Begin Simulation
     until = 1
@@ -71,7 +82,7 @@ def main():
                 error_handler_1(e)
 
             try:
-                env.toggle_status()
+                env.toggle_status(arrival_times, arrival_pointer)
             except Exception as e:
                 error_handler_2(e)
 
@@ -91,7 +102,7 @@ def main():
             error_handler_1(e)
 
         try:
-            env.toggle_status()
+            env.toggle_status(arrival_times, arrival_pointer)
         except Exception as e:
             error_handler_2(e)
 
