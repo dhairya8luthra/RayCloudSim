@@ -83,7 +83,6 @@ def main():
                 error_handler_4(e)
 
             until += 1
-            print(until)
 
     # Continue the simulation until the last task successes/fails.
     while env.process_task_cnt < len(simulated_tasks):
