@@ -4,6 +4,7 @@ Example simulation with additional trust metric
 import os
 import sys
 import time
+import matplotlib.pyplot as plt
 
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
@@ -137,6 +138,16 @@ def main():
     # Visualization: frames to video
     vis_frame2video(env)
 
+    # Plot the values of both the trust values of the nodes n1 and n12
+    plt.figure(figsize=(10, 5))
+    plt.plot(env.good_node_values, label='Node n1 Trust Values')
+    plt.plot(env.bad_node_values, label='Node n12 Trust Values')
+    plt.xlabel('Time')
+    plt.ylabel('Trust Value')
+    plt.title('Trust Values of Nodes n1 and n12 Over Time')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 if __name__ == '__main__':
     main()

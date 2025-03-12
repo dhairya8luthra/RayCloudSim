@@ -874,7 +874,9 @@ class ZAM_env(Env_Trust):
         self.ONLINE_NODES = [node for _, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
         self.trust_messages = []
-        self.global_trust = {node: 0.00000001 for _, node in self.scenario.get_nodes().items()}
+        self.global_trust = {node: 0.5 for _, node in self.scenario.get_nodes().items()}
+        self.good_node_values = []
+        self.bad_node_values = []
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -956,7 +958,6 @@ class ZAM_env(Env_Trust):
         ALPHA = 0.7
         BETA = 0.3
 
-        t_old = self.global_trust[target]
         peerRating = self.accumulate_PR(target)
         t_final = (ALPHA * target.get_QoS()) + (BETA * peerRating)
 
@@ -964,23 +965,25 @@ class ZAM_env(Env_Trust):
 
     def compute_trust(self):
 
-        THRESHOLD = 1.3
+        THRESHOLD = 1.0
+        OLD_WEIGHT = 0.8
+        COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
 
         # Update over all the nodes
         for _, target in self.scenario.get_nodes().items():
-            
-            OLD_WEIGHT = 0.8
-            COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
 
-            if isinstance(target, ZAMNode):
+            if isinstance(target, ZAMNode) and target.get_online():
                 old_trust = self.global_trust[target]
                 compute_trust = self.compute_final(target)
-                new_trust = (OLD_WEIGHT * old_trust) + (COMPUTE_WEIGHT * compute_trust)
+                new_trust = (COMPUTE_WEIGHT * compute_trust) + (OLD_WEIGHT * old_trust)
                 if(new_trust > 1.0):
                     new_trust = 1.0
                     print("Trust Value Exceeded 1.0")
                 self.global_trust[target] = new_trust
                 print(new_trust)
+
+            self.good_node_values.append(self.global_trust[self.scenario.get_node("n1")])
+            self.bad_node_values.append(self.global_trust[self.scenario.get_node("n12")])
 
         # Label the malicious
         trust_list = np.array([trust for _, trust in self.global_trust.items()])
