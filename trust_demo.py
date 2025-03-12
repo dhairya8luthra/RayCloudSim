@@ -4,7 +4,7 @@ Example simulation with additional trust metric
 import os
 import sys
 import time
-
+from sklearn.metrics.pairwise import cosine_similarity
 
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
@@ -34,7 +34,6 @@ def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timer
 
     while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] <= now + 2:
         arrival_pointer[node] += 1
-    print(3, error, task_id, now)
 
 def error_handler_4(error: Exception):
     print(4, error)
@@ -56,7 +55,8 @@ def main():
     task_assign = {}
     arrival_pointer = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
 
-    env.generate_static_embeddings()
+    node_embedding = env.generate_static_embeddings().iloc[1:, 1:].to_numpy()
+    similarity_matrix = cosine_similarity(node_embedding)
 
     # The Task are already sorted by generation time
     for task_info in simulated_tasks:
@@ -140,7 +140,7 @@ def main():
 
     # Visualization: frames to video
     vis_frame2video(env)
-
+    print("Similarity Matrix", similarity_matrix)
 
 if __name__ == '__main__':
     main()

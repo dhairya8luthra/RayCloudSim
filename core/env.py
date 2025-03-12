@@ -454,7 +454,7 @@ class Env_Trust(Env):
             exit(1)
             return None
 
-        node2vec = Node2Vec(G, dimensions=128, walk_length=10, num_walks=100, workers=4)
+        node2vec = Node2Vec(G, dimensions=16, walk_length=10, num_walks=100, workers=4)
         model = node2vec.fit(window=5, min_count=1, batch_words=4)
 
         embeddings_dict = {node: model.wv[node] for node in G.nodes()}
@@ -464,7 +464,7 @@ class Env_Trust(Env):
         for node, emb in embeddings_dict.items():
             all_embeddings.append([node] + emb.tolist())
         
-        columns = ["node"] + [f"dim_{i}" for i in range(128)]
+        columns = ["node"] + [f"dim_{i}" for i in range(16)]
         df_embeddings = pd.DataFrame(all_embeddings, columns=columns)
         
         # Save embeddings to CSV
@@ -490,7 +490,7 @@ class Env_Trust(Env):
             return None
         
         # Generate Node2Vec model
-        node2vec = Node2Vec(G_online, dimensions=128, walk_length=10, num_walks=100, workers=4)
+        node2vec = Node2Vec(G_online, dimensions=16, walk_length=10, num_walks=100, workers=4)
         model = node2vec.fit(window=5, min_count=1, batch_words=4)
         
         # Store embeddings
@@ -501,7 +501,7 @@ class Env_Trust(Env):
         for node, emb in embeddings_dict.items():
             all_embeddings.append([node] + emb.tolist())
         
-        columns = ["node"] + [f"dim_{i}" for i in range(128)]
+        columns = ["node"] + [f"dim_{i}" for i in range(16)]
         df_embeddings = pd.DataFrame(all_embeddings, columns=columns)
         
         # Save embeddings to CSV
