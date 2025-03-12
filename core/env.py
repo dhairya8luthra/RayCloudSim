@@ -593,7 +593,7 @@ class Env_Trust(Env):
             elif exec_flag == FLAG_TASK_INSUFFICIENT_BUFFER:
                  net_score += NO_CHANGE # Trust Value no change
 
-            net_score = max(0.0, min(1.0, net_score))
+            net_score = max(0.0000001, min(1.0, net_score))
 
             src.set_trust_score(dst, net_score)
             print(f"Trust value from {src.name} to {dst.name} is {net_score}")
