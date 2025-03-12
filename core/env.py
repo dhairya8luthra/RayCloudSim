@@ -3,6 +3,8 @@ import os
 import simpy
 import numpy as np
 import networkx as nx
+import pandas as pd
+from node2vec import Node2Vec
 
 from typing import Optional, Tuple
 
@@ -440,6 +442,45 @@ class Env_Trust(Env):
         self.ONLINE_NODES = [node for k, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
         self.trust_messages = []
+
+
+    def generate_spatial_embeddings(self, G):
+        """
+        Generates Node2Vec embeddings for the given infrastructure graph while ignoring offline nodes.
+        """
+        G = self.scenario.infrastructure.graph  # Use the graph from the Infrastructure class
+        
+        # Filter out offline nodes using node.get_online()
+        online_nodes = [node for node in G.nodes if G.nodes[node]["data"].get_online()]
+        
+        # Create a subgraph with only online nodes
+        G_online = G.subgraph(online_nodes).copy()
+        
+        if len(G_online.nodes) == 0:
+            print("No online nodes available for embedding generation.")
+            return None
+        
+        # Generate Node2Vec model
+        node2vec = Node2Vec(G_online, dimensions=128, walk_length=10, num_walks=100, workers=4)
+        model = node2vec.fit(window=5, min_count=1, batch_words=4)
+        
+        # Store embeddings
+        embeddings_dict = {node: model.wv[node] for node in G_online.nodes()}
+        
+        # Convert embeddings to DataFrame
+        all_embeddings = []
+        for node, emb in embeddings_dict.items():
+            all_embeddings.append([node] + emb.tolist())
+        
+        columns = ["node"] + [f"dim_{i}" for i in range(128)]
+        df_embeddings = pd.DataFrame(all_embeddings, columns=columns)
+        
+        # Save embeddings to CSV
+        df_embeddings.to_csv("node2vec_embeddings.csv", index=False)
+        print("Node2Vec embeddings have been saved to 'node2vec_embeddings.csv'.")
+        
+        return df_embeddings
+
 
 
     def info4frame_clock(self):

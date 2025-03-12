@@ -36,6 +36,9 @@ def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timer
         arrival_pointer[node] += 1
     print(3, error, task_id, now)
 
+def error_handler_4(error: Exception):
+    print(4, error)
+    exit()
 
 def main():
     # Create the Env
@@ -100,6 +103,11 @@ def main():
             except Exception as e:
                 error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
 
+            try:
+                env.generate_spatial_embeddings(env.scenario.infrastructure.graph)
+            except Exception as e:
+                error_handler_4(e)
+
             print(arrival_times['n1'], arrival_pointer['n1'], env.now, len(env.scenario.get_node('n1').task_buffer.task_ids[:]))
             until += 1
         # time.sleep(0.2)
@@ -121,6 +129,11 @@ def main():
             env.run(until=until)
         except Exception as e:
             error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
+
+        try:
+            env.generate_spatial_embeddings(env.scenario.infrastructure.graph)
+        except Exception as e:
+            error_handler_4(e)
 
     env.close()
 
