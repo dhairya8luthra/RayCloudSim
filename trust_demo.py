@@ -56,6 +56,7 @@ def main():
     task_assign = {}
     arrival_pointer = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
 
+    env.generate_static_embeddings()
 
     # The Task are already sorted by generation time
     for task_info in simulated_tasks:
@@ -104,7 +105,7 @@ def main():
                 error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
 
             try:
-                env.generate_spatial_embeddings(env.scenario.infrastructure.graph)
+                env.generate_spatial_embeddings()
             except Exception as e:
                 error_handler_4(e)
 
@@ -131,7 +132,7 @@ def main():
             error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
 
         try:
-            env.generate_spatial_embeddings(env.scenario.infrastructure.graph)
+            env.generate_spatial_embeddings()
         except Exception as e:
             error_handler_4(e)
 

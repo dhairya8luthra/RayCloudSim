@@ -443,12 +443,41 @@ class Env_Trust(Env):
         self.ACTIVE_NODES = []
         self.trust_messages = []
 
+    def generate_static_embeddings(self):
+        """
+        Generates Node2Vec embeddings for the given infrastructure graph.
+        """
+        G = self.scenario.infrastructure.graph
 
-    def generate_spatial_embeddings(self, G):
+        if len(G.nodes) == 0:
+            print("No online nodes available for embedding generation.")
+            exit(1)
+            return None
+
+        node2vec = Node2Vec(G, dimensions=128, walk_length=10, num_walks=100, workers=4)
+        model = node2vec.fit(window=5, min_count=1, batch_words=4)
+
+        embeddings_dict = {node: model.wv[node] for node in G.nodes()}
+
+        # Convert embeddings to DataFrame
+        all_embeddings = []
+        for node, emb in embeddings_dict.items():
+            all_embeddings.append([node] + emb.tolist())
+        
+        columns = ["node"] + [f"dim_{i}" for i in range(128)]
+        df_embeddings = pd.DataFrame(all_embeddings, columns=columns)
+        
+        # Save embeddings to CSV
+        df_embeddings.to_csv("sta_node2vec_embeddings.csv", index=False)
+        print("Node2Vec embeddings have been saved to 'node2vec_embeddings.csv'.")
+        
+        return df_embeddings
+
+    def generate_spatial_embeddings(self):
         """
         Generates Node2Vec embeddings for the given infrastructure graph while ignoring offline nodes.
         """
-        G = self.scenario.infrastructure.graph  # Use the graph from the Infrastructure class
+        G = self.scenario.infrastructure.graph
         
         # Filter out offline nodes using node.get_online()
         online_nodes = [node for node in G.nodes if G.nodes[node]["data"].get_online()]
@@ -476,7 +505,7 @@ class Env_Trust(Env):
         df_embeddings = pd.DataFrame(all_embeddings, columns=columns)
         
         # Save embeddings to CSV
-        df_embeddings.to_csv("node2vec_embeddings.csv", index=False)
+        df_embeddings.to_csv("dyn_node2vec_embeddings.csv", index=False)
         print("Node2Vec embeddings have been saved to 'node2vec_embeddings.csv'.")
         
         return df_embeddings
@@ -489,9 +518,6 @@ class Env_Trust(Env):
         # Online Malicious Node: 1.0
         # Online Non-Malicious Node: -1.0
         while True:
-            status = [1.0 if isinstance(node, MaliciousNode) and node.get_online() else (-1.0 if node.get_online() else 0.0)
-                         for _, node in self.scenario.get_nodes().items()]
-            print(status)
 
             self.info4frame[self.now] = {
                 'node': {k: 1.0 if isinstance(node, MaliciousNode) and node.get_online() else (-1.0 if node.get_online() else 0.0)
@@ -523,16 +549,16 @@ class Env_Trust(Env):
                     continue
 
                 total_tasks = len(node.task_buffer.task_ids[:]) + len(node.active_task_ids)
-                print(f"Nearest Task {arrival_times[node.name][arrival_pointer[node.name]]}, Length: {len(arrival_times[node.name])}, Pointer: {arrival_pointer[node.name]}, Timestamp: {now}")
+                # print(f"Nearest Task {arrival_times[node.name][arrival_pointer[node.name]]}, Length: {len(arrival_times[node.name])}, Pointer: {arrival_pointer[node.name]}, Timestamp: {now}")
 
-                if total_tasks == 0 and node.name == 'n1':
-                    print(f"Not Cringe, total_tasks: {total_tasks}")
-                    print(arrival_pointer[node.name] < len(arrival_times[node.name]))
-                    print(arrival_times[node.name][arrival_pointer[node.name]] <= now)
-                elif node.name == 'n1':
-                    print(f"Cringe, total_tasks: {total_tasks}")
-                    print("pointer", arrival_pointer[node.name] < len(arrival_times[node.name]))
-                    print("arrival", arrival_times[node.name][arrival_pointer[node.name]] <= now)
+                # if total_tasks == 0 and node.name == 'n1':
+                #     print(f"Not Cringe, total_tasks: {total_tasks}")
+                #     print(arrival_pointer[node.name] < len(arrival_times[node.name]))
+                #     print(arrival_times[node.name][arrival_pointer[node.name]] <= now)
+                # elif node.name == 'n1':
+                #     print(f"Cringe, total_tasks: {total_tasks}")
+                #     print("pointer", arrival_pointer[node.name] < len(arrival_times[node.name]))
+                #     print("arrival", arrival_times[node.name][arrival_pointer[node.name]] <= now)
 
                 if node.get_online() \
                         and total_tasks == 0 \
@@ -571,7 +597,6 @@ class Env_Trust(Env):
                     continue
 
             if message[1] == None:
-                print(message[2], 1.3)
                 continue
             
             dst = self.scenario.get_node(message[1])
