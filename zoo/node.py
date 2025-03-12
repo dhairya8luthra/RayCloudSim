@@ -276,7 +276,7 @@ class ZAMNode(Node):
 
         # dynamic attributes
         self.peerRating = {}
-        self.online = True
+        self.online = False
         self.QoS = 0.0
         
         # For QoS Calculation
