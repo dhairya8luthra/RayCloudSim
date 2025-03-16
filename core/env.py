@@ -534,7 +534,7 @@ class Env_Trust(Env):
             yield self.controller.timeout(1)
 
     def toggle_status(self, arrival_times, arrival_pointer):
-        return
+        pass
         now = int(self.controller.now)
 
         for _, node in self.scenario.get_nodes().items():
