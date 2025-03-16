@@ -107,7 +107,7 @@ def main():
 
             until += 1
         
-        # time.sleep(0.2)
+        time.sleep(0.2)
 
 
     # Continue the simulation until the last task successes/fails.
@@ -135,19 +135,20 @@ def main():
 
     env.close()
 
+    # Plot the values of both the trust values of the nodes n1 and n12
+    for i in range(len(env.trust_values)):
+        plt.figure(figsize=(10, 5))
+        print(len(env.trust_values))
+        plt.plot(env.trust_values[i], label=f'Node n{i} Trust Values')
+        plt.xlabel('Time')
+        plt.ylabel('Trust Value')
+        plt.title('Trust Values of Nodes n1 and n12 Over Time')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
     # Visualization: frames to video
     vis_frame2video(env)
-
-    # Plot the values of both the trust values of the nodes n1 and n12
-    plt.figure(figsize=(10, 5))
-    plt.plot(env.good_node_values, label='Node n1 Trust Values')
-    plt.plot(env.bad_node_values, label='Node n12 Trust Values')
-    plt.xlabel('Time')
-    plt.ylabel('Trust Value')
-    plt.title('Trust Values of Nodes n1 and n12 Over Time')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
 
 if __name__ == '__main__':
     main()

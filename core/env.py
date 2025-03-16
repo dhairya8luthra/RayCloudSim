@@ -534,7 +534,7 @@ class Env_Trust(Env):
             yield self.controller.timeout(1)
 
     def toggle_status(self, arrival_times, arrival_pointer):
-        
+        return
         now = int(self.controller.now)
 
         for _, node in self.scenario.get_nodes().items():
@@ -875,8 +875,8 @@ class ZAM_env(Env_Trust):
         self.ACTIVE_NODES = []
         self.trust_messages = []
         self.global_trust = {node: 0.5 for _, node in self.scenario.get_nodes().items()}
-        self.good_node_values = []
-        self.bad_node_values = []
+        self.trust_values = [[] for _ in range(len(self.scenario.get_nodes()))]
+
 
     def info4frame_clock(self):
         """Recorder the info required for simulation frames."""
@@ -982,8 +982,10 @@ class ZAM_env(Env_Trust):
                 self.global_trust[target] = new_trust
                 print(new_trust)
 
-            self.good_node_values.append(self.global_trust[self.scenario.get_node("n1")])
-            self.bad_node_values.append(self.global_trust[self.scenario.get_node("n12")])
+        
+        for i in range(len(self.trust_values)):
+            self.trust_values[i].append(self.global_trust[self.scenario.get_node(f'n{i}')])
+
 
         # Label the malicious
         trust_list = np.array([trust for _, trust in self.global_trust.items()])
@@ -1013,6 +1015,11 @@ class ZAM_env(Env_Trust):
 
     def computeQoS(self):
 
+        TRUST_INCREASE = 0.1
+        TRUST_DECREASE = -0.2
+        TRUST_DECREASE_SMALL = -0.1
+        NO_CHANGE = 0.0
+
         lambda_task = 0.7
         lambda_time = 0.3
 
@@ -1030,6 +1037,29 @@ class ZAM_env(Env_Trust):
             oldQos = dst.get_QoS()
             
             exec_flag = message[3]
+
+            src = self.scenario.get_node(message[0])
+            if isinstance(src, ZAMNode):
+                if src.get_online == False:
+                    print(f"Node {src.name} is offline")
+
+            net_score = src.peerRating[dst.name]
+
+                        # Check the message type for each message
+            if exec_flag == FLAG_TASK_EXECUTION_DONE:
+                # Trust Value increase
+                net_score += TRUST_INCREASE  
+            elif exec_flag == FLAG_TASK_EXECUTION_FAIL:
+                net_score += TRUST_DECREASE
+            elif exec_flag == FLAG_TASK_EXECUTION_TIMEOUT:
+                net_score += TRUST_DECREASE_SMALL 
+            elif exec_flag == FLAG_TASK_EXECUTION_NET_CONGESTION:
+                 net_score += NO_CHANGE # Trust Value no change
+            elif exec_flag == FLAG_TASK_INSUFFICIENT_BUFFER:
+                 net_score += NO_CHANGE # Trust Value no change
+
+            net_score = max(0.0000001, min(1.0, net_score))
+            src.peerRating[dst.name] = net_score
 
             # Update the task counters
             if exec_flag == FLAG_TASK_EXECUTION_DONE or exec_flag == FLAG_TASK_EXECUTION_FAIL:
