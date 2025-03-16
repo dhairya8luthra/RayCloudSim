@@ -86,17 +86,17 @@ def main():
 
             # Execute the simulation with error handler
             try:
-                env.compute_trust()
+                env.computeQoS()
             except Exception as e:
                 error_handler_1(e)
 
             try:
-                env.toggle_status(arrival_times, arrival_pointer)
+                env.compute_trust()
             except Exception as e:
                 error_handler_2(e)
 
             try:
-                env.computeQoS()
+                env.toggle_status(arrival_times, arrival_pointer)
             except Exception as e:
                 error_handler_3(e)
 
@@ -112,19 +112,18 @@ def main():
 
     # Continue the simulation until the last task successes/fails.
     while env.process_task_cnt < len(simulated_tasks):
-        until += 1
         try:
-            env.compute_trust()
+            env.computeQoS()
         except Exception as e:
             error_handler_1(e)
 
         try:
-            env.toggle_status(arrival_times, arrival_pointer)
+            env.compute_trust()
         except Exception as e:
             error_handler_2(e)
 
         try:
-            env.computeQoS()
+            env.toggle_status(arrival_times, arrival_pointer)
         except Exception as e:
             error_handler_3(e)
 
@@ -133,6 +132,7 @@ def main():
         except Exception as e:
             error_handler_4(e, arrival_times, arrival_pointer, task_assign, until)
 
+        until += 1
     env.close()
 
     # Plot the values of both the trust values of the nodes n1 and n12
