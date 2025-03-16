@@ -67,7 +67,7 @@
             "ExeEnergyCoef": 0.27
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "TrustNode",
             "NodeName": "n6",
             "NodeId": 6,
             "MaxCpuFreq": 9,
@@ -111,7 +111,7 @@
             "ExeEnergyCoef": 0.88
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "TrustNode",
             "NodeName": "n10",
             "NodeId": 10,
             "MaxCpuFreq": 11,
@@ -149,163 +149,193 @@
             "EdgeType": "Link",
             "SrcNodeID": 0,
             "DstNodeID": 12,
-            "Bandwidth": 110
+            "Bandwidth": 50
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 0,
             "DstNodeID": 6,
-            "Bandwidth": 136
+            "Bandwidth": 81
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 0,
             "DstNodeID": 1,
-            "Bandwidth": 107
+            "Bandwidth": 94
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 0,
+            "DstNodeID": 10,
+            "Bandwidth": 117
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 1,
             "DstNodeID": 4,
-            "Bandwidth": 124
+            "Bandwidth": 194
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 1,
             "DstNodeID": 12,
-            "Bandwidth": 61
+            "Bandwidth": 163
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 1,
             "DstNodeID": 6,
-            "Bandwidth": 155
+            "Bandwidth": 184
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 2,
             "DstNodeID": 5,
-            "Bandwidth": 119
+            "Bandwidth": 135
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 2,
             "DstNodeID": 8,
-            "Bandwidth": 73
+            "Bandwidth": 53
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 2,
+            "DstNodeID": 11,
+            "Bandwidth": 71
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 2,
+            "DstNodeID": 3,
+            "Bandwidth": 72
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 3,
             "DstNodeID": 11,
             "Bandwidth": 184
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 3,
-            "DstNodeID": 11,
-            "Bandwidth": 145
-        },
-        {
-            "EdgeType": "Link",
-            "SrcNodeID": 3,
             "DstNodeID": 5,
-            "Bandwidth": 56
+            "Bandwidth": 123
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 3,
-            "DstNodeID": 2,
-            "Bandwidth": 72
+            "DstNodeID": 10,
+            "Bandwidth": 149
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 4,
             "DstNodeID": 7,
-            "Bandwidth": 177
+            "Bandwidth": 131
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 4,
             "DstNodeID": 12,
-            "Bandwidth": 102
+            "Bandwidth": 65
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 4,
+            "DstNodeID": 6,
+            "Bandwidth": 55
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 5,
             "DstNodeID": 11,
-            "Bandwidth": 50
+            "Bandwidth": 196
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 5,
             "DstNodeID": 8,
-            "Bandwidth": 144
+            "Bandwidth": 176
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 6,
             "DstNodeID": 12,
-            "Bandwidth": 155
+            "Bandwidth": 83
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 6,
             "DstNodeID": 10,
-            "Bandwidth": 85
+            "Bandwidth": 186
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 7,
             "DstNodeID": 12,
-            "Bandwidth": 189
+            "Bandwidth": 197
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 7,
             "DstNodeID": 6,
-            "Bandwidth": 174
+            "Bandwidth": 189
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 7,
+            "DstNodeID": 1,
+            "Bandwidth": 128
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 8,
             "DstNodeID": 11,
-            "Bandwidth": 118
+            "Bandwidth": 63
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 8,
+            "DstNodeID": 10,
+            "Bandwidth": 177
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 9,
             "DstNodeID": 3,
-            "Bandwidth": 187
+            "Bandwidth": 106
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 9,
             "DstNodeID": 11,
-            "Bandwidth": 115
+            "Bandwidth": 178
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 9,
             "DstNodeID": 10,
-            "Bandwidth": 50
+            "Bandwidth": 114
+        },
+        {
+            "EdgeType": "Link",
+            "SrcNodeID": 9,
+            "DstNodeID": 2,
+            "Bandwidth": 58
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 10,
             "DstNodeID": 11,
-            "Bandwidth": 132
-        },
-        {
-            "EdgeType": "Link",
-            "SrcNodeID": 10,
-            "DstNodeID": 3,
-            "Bandwidth": 104
+            "Bandwidth": 128
         },
         {
             "EdgeType": "Link",
             "SrcNodeID": 10,
             "DstNodeID": 5,
-            "Bandwidth": 168
+            "Bandwidth": 150
         }
     ]
 }

@@ -6,3 +6,6 @@ logs/
 
 *.sh
 toy_debug.py
+node2vec_embeddings.csv
+dyn_node2vec_embeddings.csv
+sta_node2vec_embeddings.csv

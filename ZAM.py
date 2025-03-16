@@ -4,7 +4,7 @@ Example simulation with additional trust metric
 import os
 import sys
 import time
-from sklearn.metrics.pairwise import cosine_similarity
+import matplotlib.pyplot as plt
 
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
@@ -13,11 +13,11 @@ sys.path.insert(0, parent_dir)
 
 import pandas as pd
 
-from core.env import Env_Trust
+from core.env import ZAM_env
 from core.task import Task
 from core.vis import *
 
-from examples.scenarios.trust_scenario_1 import Scenario
+from examples.scenarios.zam_scenario import Scenario
 
 
 def error_handler_1(error: Exception):
@@ -25,9 +25,11 @@ def error_handler_1(error: Exception):
 
 def error_handler_2(error: Exception):
     print(2, error)
-    exit()
 
-def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timers, now):
+def error_handler_3(error: Exception):
+    print(3, error)
+
+def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
     _, _, task_id = error.args[0]
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
@@ -35,14 +37,10 @@ def error_handler_3(error: Exception, arrival_times, arrival_pointer, task_timer
     while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] <= now + 2:
         arrival_pointer[node] += 1
 
-def error_handler_4(error: Exception):
-    print(4, error)
-    exit()
-
 def main():
     # Create the Env
     scenario=Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
-    env = Env_Trust(scenario, config_file="core/configs/env_config.json")
+    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
 
 
     # Load simulated tasks
@@ -51,12 +49,10 @@ def main():
     n_tasks = len(simulated_tasks)
 
     # Check the arrival times of tasks for each node
+    # Check the arrival times of tasks for each node
     arrival_times = {node.name: [] for _, node in env.scenario.get_nodes().items()}
     task_assign = {}
     arrival_pointer = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
-
-    node_embedding = env.generate_static_embeddings().iloc[1:, 1:].to_numpy()
-    similarity_matrix = cosine_similarity(node_embedding)
 
     # The Task are already sorted by generation time
     for task_info in simulated_tasks:
@@ -100,18 +96,19 @@ def main():
                 error_handler_2(e)
 
             try:
-                env.run(until=until)
+                env.computeQoS()
             except Exception as e:
-                error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
+                error_handler_3(e)
 
             try:
-                env.generate_spatial_embeddings()
+                env.run(until=until)
             except Exception as e:
-                error_handler_4(e)
+                error_handler_4(e, arrival_times, arrival_pointer, task_assign, until)
 
-            print(arrival_times['n1'], arrival_pointer['n1'], env.now, len(env.scenario.get_node('n1').task_buffer.task_ids[:]))
             until += 1
-        # time.sleep(0.2)
+        
+        time.sleep(0.2)
+
 
     # Continue the simulation until the last task successes/fails.
     while env.process_task_cnt < len(simulated_tasks):
@@ -127,20 +124,31 @@ def main():
             error_handler_2(e)
 
         try:
-            env.run(until=until)
+            env.computeQoS()
         except Exception as e:
-            error_handler_3(e, arrival_times, arrival_pointer, task_assign, until)
+            error_handler_3(e)
 
         try:
-            env.generate_spatial_embeddings()
+            env.run(until=until)
         except Exception as e:
-            error_handler_4(e)
+            error_handler_4(e, arrival_times, arrival_pointer, task_assign, until)
 
     env.close()
 
+    # Plot the values of both the trust values of the nodes n1 and n12
+    for i in range(len(env.trust_values)):
+        plt.figure(figsize=(10, 5))
+        print(len(env.trust_values))
+        plt.plot(env.trust_values[i], label=f'Node n{i} Trust Values')
+        plt.xlabel('Time')
+        plt.ylabel('Trust Value')
+        plt.title('Trust Values of Nodes n1 and n12 Over Time')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
     # Visualization: frames to video
     vis_frame2video(env)
-    print("Similarity Matrix", similarity_matrix)
 
 if __name__ == '__main__':
     main()
