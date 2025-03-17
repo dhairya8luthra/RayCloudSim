@@ -276,7 +276,7 @@ class ZAMNode(Node):
 
         # dynamic attributes
         self.peerRating = {}
-        self.online = False
+        self.online = True
         self.QoS = 0.0
         
         # For QoS Calculation
@@ -376,3 +376,7 @@ class ZAMMalicious(ZAMNode):
             # Increase Karma
             self.normal_threshold += 1
             return 0
+        
+    def ballot_stuffing(self, node: "Node") -> int:
+        """Execute a ballot stuffing attack by increasing the trust score of a node."""
+        pass

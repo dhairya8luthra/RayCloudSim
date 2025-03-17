@@ -534,7 +534,6 @@ class Env_Trust(Env):
             yield self.controller.timeout(1)
 
     def toggle_status(self, arrival_times, arrival_pointer):
-        pass
         now = int(self.controller.now)
 
         for _, node in self.scenario.get_nodes().items():
@@ -874,7 +873,7 @@ class ZAM_env(Env_Trust):
         self.ONLINE_NODES = [node for _, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
         self.trust_messages = []
-        self.global_trust = {node: 0.5 for _, node in self.scenario.get_nodes().items()}
+        self.global_trust = {node: 0.000001 for _, node in self.scenario.get_nodes().items()}
         self.trust_values = [[] for _ in range(len(self.scenario.get_nodes()))]
 
 
@@ -901,7 +900,7 @@ class ZAM_env(Env_Trust):
 
 
     def toggle_status(self, arrival_times, arrival_pointer):
-        
+        return
         now = int(self.controller.now)
 
         for _, node in self.scenario.get_nodes().items():
@@ -1007,10 +1006,29 @@ class ZAM_env(Env_Trust):
 
         print("=== ===")
 
-        for node, _ in self.global_trust.items():
-            trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-            if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
-                print(f"Malicious Node Detected: {node.node_id}")
+        # Calculate interquartile range (IQR) for trust values
+        trust_values = np.array([trust for _, trust in self.global_trust.items()])
+        Q1 = np.percentile(trust_values, 25)
+        Q3 = np.percentile(trust_values, 75)
+        IQR = Q3 - Q1
+
+        # Calculate bounds for outliers
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        print("----------------------------------------------------")
+        print(f"Q1 (25th percentile): {Q1}")
+        print(f"Q3 (75th percentile): {Q3}")
+        print(f"IQR (Interquartile Range): {IQR}")
+        print(f"Lower Bound for Outliers: {lower_bound}")
+        print(f"Upper Bound for Outliers: {upper_bound}")
+
+        # Identify potential outliers
+        outliers = [trust for trust in trust_values if trust < lower_bound or trust > upper_bound]
+        for outlier in outliers:
+            node_id = [node.node_id for node, trust in self.global_trust.items() if trust == outlier][0]
+            print(f"{node_id} with trust value {outlier}")
+
         print("----------------------------------------------------")
 
     def computeQoS(self):
