@@ -879,6 +879,7 @@ class ZAM_env(Env_Trust):
         self.onoffattackflag = True
         self.zscore_detections = {}
         self.boxplot_detections = {}
+        self.compute_final_adaptive_weights_flag =  True
 
 
     def info4frame_clock(self):
@@ -956,7 +957,37 @@ class ZAM_env(Env_Trust):
                 accumulate += peerRating * trust_w
 
         return accumulate
-
+    def compute_final_adaptive_weights(self, target: ZAMNode) -> float:
+         # Base weight for QoS
+         lambda_base = 0.5  
+         # Maximum expected variance for normalized trust values 
+         sigma_max2 = 0.25  
+ 
+         # Gather peer ratings for the target from all other ZAMNodes
+         peer_ratings = []
+         for node in self.scenario.get_nodes().values():
+          if node != target and isinstance(node, ZAMNode):
+                 try:
+                     peer_ratings.append(node.peerRating[target.name])
+                 except KeyError:
+                 # If the target's key is missing in a node's peerRating, skip it.
+                     pass
+ 
+         # Calculate the variance of peer ratings (default to 0 if none are available)
+         variance = np.var(peer_ratings) if peer_ratings else 0.0
+ 
+         # Adaptive weight: as variance increases, give more weight to QoS (lambda increases)
+         adaptive_lambda = lambda_base + (1 - lambda_base) * (1 - (variance / sigma_max2))
+         # Ensure the weight remains in the valid range [0, 1]
+         adaptive_lambda = max(0.0, min(1.0, adaptive_lambda))
+ 
+         # Retrieve the node's QoS and the aggregated peer rating
+         T_qos = target.get_QoS()
+         T_peer = self.accumulate_PR(target)
+ 
+     # Compute final trust using the adaptive weight
+         T_final = adaptive_lambda * T_qos + (1 - adaptive_lambda) * T_peer
+         return T_final
     def compute_final(self, target: ZAMNode) -> float:
         ALPHA = 0.7
         BETA = 0.3
@@ -977,7 +1008,10 @@ class ZAM_env(Env_Trust):
 
             if isinstance(target, ZAMNode) and target.get_online():
                 old_trust = self.global_trust[target]
-                compute_trust = self.compute_final(target)
+                if(self.compute_final_adaptive_weights_flag):
+                     compute_trust = self.compute_final_adaptive_weights(target)
+                else:
+                     compute_trust = self.compute_final(target)
                 new_trust = (COMPUTE_WEIGHT * compute_trust) + (OLD_WEIGHT * old_trust)
                 if(new_trust > 1.0):
                     new_trust = 1.0
@@ -991,7 +1025,12 @@ class ZAM_env(Env_Trust):
 
 
         # Label the malicious
-        trust_list = np.array([trust for _, trust in self.global_trust.items()])
+        trust_list = []
+        for node, trust in self.global_trust.items():
+             if not node.get_online():
+                 continue
+             trust_list.append(trust)
+        trust_list = np.array(trust_list)
         mean_trust = trust_list.mean()
         std_trust = trust_list.std()
 
@@ -1020,7 +1059,7 @@ class ZAM_env(Env_Trust):
             self.zscore_detections[self.controller.now] = zscore_detected
 
         # Calculate interquartile range (IQR) for trust values
-        trust_values = np.array([trust for _, trust in self.global_trust.items()])
+        trust_values = trust_list
         Q1 = np.percentile(trust_values, 25)
         Q3 = np.percentile(trust_values, 75)
         IQR = Q3 - Q1
