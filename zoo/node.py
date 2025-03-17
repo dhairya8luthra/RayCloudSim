@@ -278,11 +278,15 @@ class ZAMNode(Node):
         self.peerRating = {}
         self.online = True
         self.QoS = 0.0
+        self.isExecuting = False
         
         # For QoS Calculation
         self.successful_tasks = 0
         self.total_tasks = 0
-
+    def set_is_executing(self, status: bool):
+        self.isExecuting = status
+    def get_is_executing(self) -> bool:
+        return self.isExecuting
     def get_successful_tasks(self) -> float:
         return self.successful_tasks
 

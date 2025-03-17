@@ -968,8 +968,8 @@ class ZAM_env(Env_Trust):
 
     def compute_trust(self):
 
-        THRESHOLD = 1.0
-        OLD_WEIGHT = 0.8
+        THRESHOLD = 1.5
+        OLD_WEIGHT = 0.7
         COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
 
         # Update over all the nodes
@@ -1042,7 +1042,7 @@ class ZAM_env(Env_Trust):
         for outlier in outliers:
             node_id = [node.node_id for node, trust in self.global_trust.items() if trust == outlier][0]
             print(f"using boxplot method the malicious node is {node_id} with trust value {outlier}")
-            boxplot_detected.append(node.node_id)
+            boxplot_detected.append(node_id)
 
         print("----------------------------------------------------")
         if boxplot_detected:
@@ -1086,7 +1086,7 @@ class ZAM_env(Env_Trust):
                 net_score += TRUST_INCREASE  
             elif exec_flag == FLAG_TASK_EXECUTION_FAIL:
                 if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
-                    net_score += TRUST_INCREASE
+                    net_score += 1.0
                     print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
                     # Record ballot stuffing attack event
                     attack_time = self.controller.now
@@ -1099,7 +1099,7 @@ class ZAM_env(Env_Trust):
                     net_score += TRUST_DECREASE
             elif exec_flag == FLAG_TASK_EXECUTION_TIMEOUT:
                 if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
-                    net_score += TRUST_INCREASE
+                    net_score += 1.0
                     print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
                     # Record ballot stuffing attack event
                     attack_time = self.controller.now
@@ -1288,6 +1288,7 @@ class ZAM_env(Env_Trust):
             # TimeoutError check
             try:
                 task.allocate(self.now)
+                
             except EnvironmentError as e:  # TimeoutError
                 self.process_task_cnt += 1
                 self.logger.append(info_type='task', 
@@ -1317,9 +1318,14 @@ class ZAM_env(Env_Trust):
         try:
             self.logger.log(f"Processing Task {{{task.task_id}}} in"
                             f" {{{task.dst_name}}}")
+            node = self.scenario.get_node(task.dst_name)
+            if isinstance(node, ZAMNode):
+                node.set_is_executing(True)
+                 
+            
             yield self.controller.timeout(task.exe_time)
 
-            node = self.scenario.get_node(task.dst_name)
+            
             
 
             if isinstance(node, ZAMMalicious) and self.onoffattackflag:
@@ -1336,6 +1342,7 @@ class ZAM_env(Env_Trust):
                         self.attacks[attack_time].append(attack_entry)
                     else:
                         self.attacks[attack_time] = [attack_entry]
+            node.set_is_executing(False)
 
             self.done_task_collector.put(
                 (task.task_id,

@@ -26,22 +26,26 @@ class Scenario(BaseScenario):
                          idle_energy_coef=node_info['IdleEnergyCoef'], 
                          exe_energy_coef=node_info['ExeEnergyCoef']
                 )
-                trust_node.peerRating = {node['NodeName']: 0.5 if node['NodeName'] != node_info['NodeName'] else None for node in self.json_nodes}
+                trust_node.peerRating = {node['NodeName']: 0.000000001 if node['NodeName'] != node_info['NodeName'] else None for node in self.json_nodes}
                 self.infrastructure.add_node(
                     trust_node
                 )
             elif node_info['NodeType'] == "MaliciousNode":
                 malicious_node = ZAMMalicious(
                     node_id=node_info['NodeId'], 
-                     name=node_info['NodeName'], 
-                     mal_type=1,
-                     max_cpu_freq=node_info['MaxCpuFreq'], 
-                     max_buffer_size=node_info['MaxBufferSize'], 
-                     location=Location(node_info['LocX'], node_info['LocY']),
-                     idle_energy_coef=node_info['IdleEnergyCoef'], 
-                     exe_energy_coef=node_info['ExeEnergyCoef'],
+                    name=node_info['NodeName'], 
+                    mal_type=1,
+                    max_cpu_freq=node_info['MaxCpuFreq'], 
+                    max_buffer_size=node_info['MaxBufferSize'], 
+                    location=Location(node_info['LocX'], node_info['LocY']),
+                    idle_energy_coef=node_info['IdleEnergyCoef'], 
+                    exe_energy_coef=node_info['ExeEnergyCoef'],
                 )
-                malicious_node.peerRating = {node['NodeName']: 1.0 if node['NodeName'] != node_info['NodeName'] else None for node in self.json_nodes}
+                malicious_node.peerRating = {
+                    node['NodeName']: (1.0 if node['NodeType'] == "MaliciousNode" else 0.000000001)
+                    if node['NodeName'] != node_info['NodeName'] else None
+                    for node in self.json_nodes
+                }
                 self.infrastructure.add_node(malicious_node)
             self.node_id2name[node_info['NodeId']] = node_info['NodeName']
 
