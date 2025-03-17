@@ -1068,9 +1068,17 @@ class ZAM_env(Env_Trust):
                 # Trust Value increase
                 net_score += TRUST_INCREASE  
             elif exec_flag == FLAG_TASK_EXECUTION_FAIL:
-                net_score += TRUST_DECREASE
+                if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
+                    net_score += TRUST_INCREASE
+                    print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
+                else:
+                    net_score += TRUST_DECREASE
             elif exec_flag == FLAG_TASK_EXECUTION_TIMEOUT:
-                net_score += TRUST_DECREASE_SMALL 
+                if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
+                    net_score += TRUST_INCREASE
+                    print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
+                else:
+                    net_score += TRUST_DECREASE_SMALL 
             elif exec_flag == FLAG_TASK_EXECUTION_NET_CONGESTION:
                  net_score += NO_CHANGE # Trust Value no change
             elif exec_flag == FLAG_TASK_INSUFFICIENT_BUFFER:
