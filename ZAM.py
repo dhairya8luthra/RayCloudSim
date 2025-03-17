@@ -107,7 +107,7 @@ def main():
 
             until += 1
         
-        time.sleep(0.3)
+        time.sleep(0.1)
 
 
     # Continue the simulation until the last task successes/fails.
@@ -135,18 +135,172 @@ def main():
         until += 1
     env.close()
 
-    # Plot the values of both the trust values of the nodes n1 and n12
-    plt.figure(figsize=(10, 5))
-    print(len(env.trust_values))
-    for i in range(len(env.trust_values)):
-        plt.plot(env.trust_values[i], label=f'Node n{i} Trust Values')
-    plt.xlabel('Time')
-    plt.ylabel('Trust Value')
-    plt.title('Trust Values of Nodes n1 and n12 Over Time')
-    plt.legend()
-    plt.grid(True)
+   
+
+    nodes_to_plot = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+    malicious_nodes = [2,5,11]
+
+    plt.figure(figsize=(10, 6))
+    for node in nodes_to_plot:
+        if node in malicious_nodes:
+            plt.plot(env.trust_values[node][:300], label=f'Node n{node}', color='darkred', linewidth=3)
+        else:
+            plt.plot(env.trust_values[node][:300], label=f'Node n{node}', linewidth=1)
+            
+    # Prepare lists to collect attack marker coordinates.
+    bsa_x, bsa_y = [], []      
+    onoff_x, onoff_y = [], []     
+    # Loop through the attacks dictionary to get marker positions.
+    for attack_time, events in env.attacks.items():
+    # Only consider attacks within time 0-300.
+        if attack_time < 0 or attack_time > 300:
+            continue
+        for event in events:
+            attacking_node = event["attacking_node"]
+            attack_type = event["attack_type"]
+            try:
+                node_index = int(attacking_node.strip('n'))
+            except Exception as e:
+                continue
+        # Use the simulation time as the x coordinate.
+        time_index = int(attack_time)
+        # Ensure that the trust value list is long enough.
+        if time_index < len(env.trust_values[node_index]):
+            y_value = env.trust_values[node_index][time_index]
+            if attack_type == "ballot stuffing":
+                bsa_x.append(time_index)
+                bsa_y.append(y_value)
+            elif attack_type == "on-off attack":
+                onoff_x.append(time_index)
+                onoff_y.append(y_value)
+
+# Plot attack markers if any.
+    if bsa_x:
+        plt.scatter(bsa_x, bsa_y, color='blue', marker='x', s=100, label='BSA Attack')
+    if onoff_x:
+        plt.scatter(onoff_x, onoff_y, color='red', marker='x', s=100, label='On-off Attack')
+
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Trust Values of Nodes n1 and n12 Over Time (Time 0-300)', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
+    plt.show()
+    
+    # ---------------------------
+    
+    plt.figure(figsize=(10, 6))
+    zscore_x, zscore_y = [], []
+    zscore_x, zscore_y = [], []
+    boxplot_x, boxplot_y = [], []
+    
+    # Open file to store the detections with one row per timestamp (Z-Score)
+    with open("detections_zscore.txt", "w") as f:
+        f.write("Z_SCORE DETECTIONS\n")
+        for detection_time, node_ids in env.zscore_detections.items():
+            time_index = int(detection_time)
+            valid_nodes = []
+            for node_id in node_ids:
+                if time_index < len(env.trust_values[node_id]):
+                    valid_nodes.append(str(node_id))
+                    zscore_x.append(time_index)
+                    zscore_y.append(env.trust_values[node_id][time_index])
+            if valid_nodes:
+                f.write(f"Time: {time_index}, Nodes: {','.join(valid_nodes)}\n")
+    
+    if zscore_x:
+        plt.scatter(zscore_x, zscore_y, color='green', marker='^', s=100, label='Z-Score Detection')
+    
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Z-Score Malicious Detections', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
+    plt.show()
+    
+    # ---------------------------
+    # Graph 3: Boxplot Malicious Detections
+    plt.figure(figsize=(10, 6))
+    with open("detections_boxplot.txt", "w") as f:
+        f.write("BOXPLOT DETECTIONS\n")
+        for detection_time, node_ids in env.boxplot_detections.items():
+            time_index = int(detection_time)
+            valid_nodes = []
+            for node_id in node_ids:
+                if time_index < len(env.trust_values[node_id]):
+                    valid_nodes.append(str(node_id))
+                    boxplot_x.append(time_index)
+                    boxplot_y.append(env.trust_values[node_id][time_index])
+            if valid_nodes:
+                f.write(f"Time: {time_index}, Nodes: {','.join(valid_nodes)}\n")
+    
+    if boxplot_x:
+        plt.scatter(boxplot_x, boxplot_y, color='purple', marker='D', s=100, label='Boxplot Detection')
+    
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Boxplot Malicious Detections', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
     plt.show()
 
+    if boxplot_x:
+        plt.scatter(boxplot_x, boxplot_y, color='purple', marker='D', s=100, label='Boxplot Detection')
+
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Boxplot Malicious Detections', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
+    plt.show()
+# --- Z-Score Detections Over Time ---
+# Get sorted times for which a detection occurred
+    zscore_times = sorted(env.zscore_detections.keys())
+    zscore_counts = [len(env.zscore_detections[t]) for t in zscore_times]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(zscore_times, zscore_counts, marker='o', linestyle='-', color='green', label='Z-Score Detection Count')
+    for t in zscore_times:
+    # Get list of detected node IDs at time t and convert them to names like "n<id>"
+        node_ids = env.zscore_detections[t]
+        node_names = [f"n{node_id}" for node_id in node_ids]
+        annotation_text = ', '.join(node_names)
+    # Annotate above the point
+       
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    plt.title('Z-Score Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    plt.legend(loc='upper right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+    plt.show()
+
+# --- Boxplot Detections Over Time ---
+    boxplot_times = sorted(env.boxplot_detections.keys())
+    boxplot_counts = [len(env.boxplot_detections[t]) for t in boxplot_times]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(boxplot_times, boxplot_counts, marker='o', linestyle='-', color='purple', label='Boxplot Detection Count')
+    for t in boxplot_times:
+        node_ids = env.boxplot_detections[t]
+        node_names = [f"n{node_id}" for node_id in node_ids]
+        annotation_text = ', '.join(node_names)
+        
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    plt.title('Boxplot Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    plt.legend(loc='upper right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+    plt.show()
     # Visualization: frames to video
     vis_frame2video(env)
 
