@@ -877,6 +877,8 @@ class ZAM_env(Env_Trust):
         self.trust_values = [[] for _ in range(len(self.scenario.get_nodes()))]
         self.attacks = {} 
         self.onoffattackflag = True
+        self.zscore_detections = {}
+        self.boxplot_detections = {}
 
 
     def info4frame_clock(self):
@@ -1002,11 +1004,20 @@ class ZAM_env(Env_Trust):
         print(trusts)
 
         print("=== Z-Scores ===")
+        zscore_detected = []
         for node, _ in self.global_trust.items():
             trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0.0 else 0.0
             print(trust)
 
         print("=== ===")
+        for node, _ in self.global_trust.items():
+             trust = (self.global_trust[node] - mean_trust) / std_trust if std_trust != 0.0 else 0.0
+             if trust <= lower_bound or trust >= higher_bound and isinstance(node, ZAMNode):
+                 print(f"Malicious Node Detected: {node.node_id}")
+                 zscore_detected.append(node.node_id)
+        print("=== ===")
+        if zscore_detected:
+            self.zscore_detections[self.controller.now] = zscore_detected
 
         # Calculate interquartile range (IQR) for trust values
         trust_values = np.array([trust for _, trust in self.global_trust.items()])
@@ -1017,6 +1028,7 @@ class ZAM_env(Env_Trust):
         # Calculate bounds for outliers
         lower_bound = Q1 - 1.5 * IQR
         upper_bound = Q3 + 1.5 * IQR
+        boxplot_detected = []
 
         print("----------------------------------------------------")
         print(f"Q1 (25th percentile): {Q1}")
@@ -1029,9 +1041,12 @@ class ZAM_env(Env_Trust):
         outliers = [trust for trust in trust_values if trust < lower_bound or trust > upper_bound]
         for outlier in outliers:
             node_id = [node.node_id for node, trust in self.global_trust.items() if trust == outlier][0]
-            print(f"{node_id} with trust value {outlier}")
+            print(f"using boxplot method the malicious node is {node_id} with trust value {outlier}")
+            boxplot_detected.append(node.node_id)
 
         print("----------------------------------------------------")
+        if boxplot_detected:
+            self.boxplot_detections[self.controller.now] = boxplot_detected
 
     def computeQoS(self):
 

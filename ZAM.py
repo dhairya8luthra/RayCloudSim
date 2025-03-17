@@ -107,7 +107,7 @@ def main():
 
             until += 1
         
-        time.sleep(0.1)
+        time.sleep(0)
 
 
     # Continue the simulation until the last task successes/fails.
@@ -188,8 +188,96 @@ def main():
     plt.xlim(0, 300)
     plt.tight_layout()
     plt.show()
+    
+    # ---------------------------
+    
+    plt.figure(figsize=(10, 6))
+    zscore_x, zscore_y = [], []
+    for detection_time, node_ids in env.zscore_detections.items():
+        
+        for node_id in node_ids:
+            time_index = int(detection_time)
+            if time_index < len(env.trust_values[node_id]):
+                y_value = env.trust_values[node_id][time_index]
+                zscore_x.append(time_index)
+                zscore_y.append(y_value)
 
+    if zscore_x:
+        plt.scatter(zscore_x, zscore_y, color='green', marker='^', s=100, label='Z-Score Detection')
 
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Z-Score Malicious Detections', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
+    plt.show()
+
+# ---------------------------
+# Graph 3: Boxplot Malicious Detections
+    plt.figure(figsize=(10, 6))
+    boxplot_x, boxplot_y = [], []
+    for detection_time, node_ids in env.boxplot_detections.items():
+        
+        for node_id in node_ids:
+            time_index = int(detection_time)
+            if time_index < len(env.trust_values[node_id]):
+                y_value = env.trust_values[node_id][time_index]
+                boxplot_x.append(time_index)
+                boxplot_y.append(y_value)
+
+    if boxplot_x:
+        plt.scatter(boxplot_x, boxplot_y, color='purple', marker='D', s=100, label='Boxplot Detection')
+
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title('Boxplot Malicious Detections', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, 300)
+    plt.tight_layout()
+    plt.show()
+# --- Z-Score Detections Over Time ---
+# Get sorted times for which a detection occurred
+    zscore_times = sorted(env.zscore_detections.keys())
+    zscore_counts = [len(env.zscore_detections[t]) for t in zscore_times]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(zscore_times, zscore_counts, marker='o', linestyle='-', color='green', label='Z-Score Detection Count')
+    for t in zscore_times:
+    # Get list of detected node IDs at time t and convert them to names like "n<id>"
+        node_ids = env.zscore_detections[t]
+        node_names = [f"n{node_id}" for node_id in node_ids]
+        annotation_text = ', '.join(node_names)
+    # Annotate above the point
+       
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    plt.title('Z-Score Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    plt.legend(loc='upper right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+    plt.show()
+
+# --- Boxplot Detections Over Time ---
+    boxplot_times = sorted(env.boxplot_detections.keys())
+    boxplot_counts = [len(env.boxplot_detections[t]) for t in boxplot_times]
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(boxplot_times, boxplot_counts, marker='o', linestyle='-', color='purple', label='Boxplot Detection Count')
+    for t in boxplot_times:
+        node_ids = env.boxplot_detections[t]
+        node_names = [f"n{node_id}" for node_id in node_ids]
+        annotation_text = ', '.join(node_names)
+        
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    plt.title('Boxplot Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    plt.legend(loc='upper right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+    plt.show()
     # Visualization: frames to video
     vis_frame2video(env)
 
