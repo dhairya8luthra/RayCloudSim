@@ -875,6 +875,8 @@ class ZAM_env(Env_Trust):
         self.trust_messages = []
         self.global_trust = {node: 0.000001 for _, node in self.scenario.get_nodes().items()}
         self.trust_values = [[] for _ in range(len(self.scenario.get_nodes()))]
+        self.attacks = {} 
+        self.onoffattackflag = True
 
 
     def info4frame_clock(self):
@@ -1071,12 +1073,26 @@ class ZAM_env(Env_Trust):
                 if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
                     net_score += TRUST_INCREASE
                     print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
+                    # Record ballot stuffing attack event
+                    attack_time = self.controller.now
+                    attack_entry = {"attacking_node": dst.name, "attack_type": "ballot stuffing"}
+                    if attack_time in self.attacks:
+                        self.attacks[attack_time].append(attack_entry)
+                    else:
+                       self.attacks[attack_time] = [attack_entry]
                 else:
                     net_score += TRUST_DECREASE
             elif exec_flag == FLAG_TASK_EXECUTION_TIMEOUT:
                 if isinstance(dst, ZAMMalicious) and isinstance(src, ZAMMalicious):
                     net_score += TRUST_INCREASE
                     print(" BALLOT STUFF Malicious Node",src.name,"increased","rating of Malicious Node",dst.name)
+                    # Record ballot stuffing attack event
+                    attack_time = self.controller.now
+                    attack_entry = {"attacking_node": dst.name, "attack_type": "ballot stuffing"}
+                    if attack_time in self.attacks:
+                        self.attacks[attack_time].append(attack_entry)
+                    else:
+                       self.attacks[attack_time] = [attack_entry]
                 else:
                     net_score += TRUST_DECREASE_SMALL 
             elif exec_flag == FLAG_TASK_EXECUTION_NET_CONGESTION:
@@ -1111,6 +1127,7 @@ class ZAM_env(Env_Trust):
 
         dst_name=None means the task is popped from the waiting deque.
         """
+        
         # DuplicateTaskIdError check
         if task.task_id in self.active_task_dict.keys():
             self.process_task_cnt += 1
@@ -1280,6 +1297,7 @@ class ZAM_env(Env_Trust):
         # -----------------------------------------------------------
 
         # Mark the task as active (i.e., execution status) task
+        
         self.active_task_dict[task.task_id] = task
         try:
             self.logger.log(f"Processing Task {{{task.task_id}}} in"
@@ -1287,14 +1305,22 @@ class ZAM_env(Env_Trust):
             yield self.controller.timeout(task.exe_time)
 
             node = self.scenario.get_node(task.dst_name)
+            
 
-            if isinstance(node, ZAMMalicious):
+            if isinstance(node, ZAMMalicious) and self.onoffattackflag:
                 flag_exec = node.execute_on_and_off_attack()
             else:
                 flag_exec = FLAG_TASK_EXECUTION_DONE
 
             if flag_exec == FLAG_TASK_EXECUTION_FAIL:
-                print("Attack Attack Attack....")
+                if isinstance(node, ZAMMalicious) and self.onoffattackflag:
+                    print("Attack Attack Attack....")
+                    attack_time = self.controller.now
+                    attack_entry = {"attacking_node": node.name, "attack_type": "on-off attack"}
+                    if attack_time in self.attacks:
+                        self.attacks[attack_time].append(attack_entry)
+                    else:
+                        self.attacks[attack_time] = [attack_entry]
 
             self.done_task_collector.put(
                 (task.task_id,
