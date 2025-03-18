@@ -902,6 +902,53 @@ class ZAM_env(Env_Trust):
                     for item in self.config['VisFrame']['TargetNodeList']
                 }
             yield self.controller.timeout(1)
+    def ballot_stuffing_attack(self):
+        """
+    Performs ballot stuffing for all malicious nodes that are online.
+    
+    For each malicious node:
+    - Identify the top 25% trusted nodes among non-malicious nodes that are online.
+    - Set the malicious node's peer rating for each of these trusted nodes to 0.
+    - Log the attack event.
+        """
+    # Filter non-malicious and online nodes as potential trusted targets.
+        trusted_candidates = [n for n in self.global_trust.keys() 
+                            if not isinstance(n, ZAMMalicious) and n.get_online()]
+    
+        if not trusted_candidates:
+            return  # No eligible trusted targets.
+    
+        # Sort the trusted candidates in descending order of trust value.
+        sorted_trusted = sorted(trusted_candidates, key=lambda n: self.global_trust[n], reverse=True)
+    
+        # Determine the top 25% count (ensuring at least one node is selected).
+        top_count = max(1, int(np.ceil(0.25 * len(sorted_trusted))))
+        top_trusted_nodes = sorted_trusted[:top_count]
+    
+        # Filter all malicious nodes that are online.
+        malicious_nodes = [n for n in self.global_trust.keys() 
+                           if isinstance(n, ZAMMalicious) and n.get_online()]
+    
+     # For each malicious node, set the peer ratings for top trusted nodes to zero.
+        for malicious_node in malicious_nodes:
+            for trusted_node in top_trusted_nodes:
+                malicious_node.peerRating[trusted_node.name] = 0.0
+        
+            # Log the attack event.
+            attack_time = self.controller.now
+            attack_entry = {
+                "attacking_node": malicious_node.name,
+                "attack_type": "ballot stuffing",
+                
+            }
+            if attack_time in self.attacks:
+                self.attacks[attack_time].append(attack_entry)
+            else:
+                self.attacks[attack_time] = [attack_entry]
+        
+            print(f"Ballot stuffing attack: Malicious node {malicious_node.name} set peer ratings of top trusted nodes "
+                f"{[tn.name for tn in top_trusted_nodes]} to 0.")
+
 
 
     def toggle_status(self, arrival_times, arrival_pointer):
@@ -1368,7 +1415,9 @@ class ZAM_env(Env_Trust):
             
 
             if isinstance(node, ZAMMalicious) and self.onoffattackflag:
-                flag_exec = node.execute_on_and_off_attack()
+                online_nodes = [n for n in self.global_trust.keys() if n.get_online()]
+                sorted_online = sorted(online_nodes, key=lambda n: self.global_trust[n], reverse=True)
+                flag_exec = node.execute_on_and_off_attack(sorted_online)
             else:
                 flag_exec = FLAG_TASK_EXECUTION_DONE
 
