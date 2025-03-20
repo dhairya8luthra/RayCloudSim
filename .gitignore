@@ -9,3 +9,5 @@ toy_debug.py
 node2vec_embeddings.csv
 dyn_node2vec_embeddings.csv
 sta_node2vec_embeddings.csv
+detections_boxplot.txt
+detections_zscore.txt
