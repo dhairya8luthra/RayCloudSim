@@ -99,6 +99,10 @@ def main():
                 env.toggle_status(arrival_times, arrival_pointer)
             except Exception as e:
                 error_handler_3(e)
+            try:
+                env.ballot_stuffing_attack()
+            except Exception as e:
+                print(e)    
 
             try:
                 env.run(until=until)
@@ -107,7 +111,7 @@ def main():
 
             until += 1
         
-        time.sleep(0.1)
+        time.sleep(0.0)
 
 
     # Continue the simulation until the last task successes/fails.

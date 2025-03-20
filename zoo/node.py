@@ -3,7 +3,7 @@ import sys
 import time
 import math
 import random
-
+import numpy as np
 from typing import Optional, List
 
 from core.infrastructure import Node, Location
@@ -364,23 +364,21 @@ class ZAMMalicious(ZAMNode):
         return self.malicious_type
     
     # Function for On-and-Off Attacks in trust based-environments delaying execution after crossing a certain threshold
-    def execute_on_and_off_attack(self) ->  int:
+    def execute_on_and_off_attack(self,sorted_online) ->  int:
         """Execute an on-and-off attack by delaying execution after crossing a certain threshold.
         
         Args:
             threshold: The trust threshold to trigger the attack.
             delay: The amount of delay to introduce.
         """
-        if self.normal_threshold >= 2:
+        top_40_count = max(1, int(np.ceil(0.4 * len(sorted_online))))
+        top_40_nodes = sorted_online[:top_40_count]
+        if self in top_40_nodes:
             # generate a random sleep
             delay = random.uniform(0.05, 0.1)
-            self.normal_threshold = 0
+            
             return 1
         else:
-            # Increase Karma
-            self.normal_threshold += 1
             return 0
         
-    def ballot_stuffing(self, node: "Node") -> int:
-        """Execute a ballot stuffing attack by increasing the trust score of a node."""
-        pass
+    
