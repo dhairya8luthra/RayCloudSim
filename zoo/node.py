@@ -1,20 +1,17 @@
 import os
 import sys
-import time
+
+current_file_path = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file_path)
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
 import math
 import random
 import numpy as np
 from typing import Optional, List
 
 from core.infrastructure import Node, Location
-
-PROJECT_NAME = 'RayCloudSim'
-cur_path = os.path.abspath(os.path.dirname(__file__))
-root_path = cur_path
-while os.path.split(os.path.split(root_path)[0])[-1] != PROJECT_NAME:
-    root_path = os.path.split(root_path)[0]
-root_path = os.path.split(root_path)[0]
-sys.path.append(root_path)
 
 
 class WirelessNode(Node):
