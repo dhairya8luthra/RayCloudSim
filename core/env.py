@@ -9,8 +9,10 @@ from node2vec import Node2Vec
 from typing import List, Optional, Tuple
 
 from core.base_scenario import BaseScenario
+
 from core.infrastructure import Link
 from core.task import Task, Node
+
 
 from zoo.node import MaliciousNode, TrustNode, ZAMNode, ZAMMalicious
 
@@ -21,6 +23,7 @@ ENERGY_UNIT_CONVERSION = 1000000
 # Flags
 FLAG_TASK_EXECUTION_DONE = 0
 FLAG_TASK_EXECUTION_FAIL = 1
+ENERGY_UNIT_CONVERSION = 1000000
 
 # Execution Flags
 FLAG_TASK_EXECUTION_TIMEOUT = 2
@@ -43,6 +46,7 @@ def user_defined_info(task):
     """ Define additional information for completed tasks, such as checking if the deadline is violated."""
     total_time = task.wait_time + task.exe_time
     return {'ddl_ok': total_time <= task.ddl}
+
 
 class EnvLogger:
     """Logger for recording simulation events and key information."""
@@ -125,7 +129,9 @@ class Env:
 
     def _validate_config(self) -> None:
         """Validate configuration to ensure the number of tracked nodes does not exceed the limit."""
+
         max_nodes = 20
+
         target_nodes = len(self.config['VisFrame']['TargetNodeList'])
         assert target_nodes <= max_nodes, (
             f"Visualization layout limits tracked nodes to {max_nodes}. Modify layout to extend."
@@ -467,7 +473,6 @@ class Env:
         # --- Log Completion ---
         # Record simulation completion
         self.logger.log("Simulation completed!")
-
 
 class Env_Trust(Env):
 
