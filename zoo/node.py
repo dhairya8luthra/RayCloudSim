@@ -11,8 +11,12 @@ import random
 import numpy as np
 from typing import Optional, List
 
-from core.infrastructure import Node, Location
+current_file_path = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file_path)
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
 
+from core.infrastructure import Node, Location
 
 class WirelessNode(Node):
     """Wireless Node where data can only be transmitted wirelessly.
