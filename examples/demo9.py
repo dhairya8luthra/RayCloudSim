@@ -1,5 +1,5 @@
 """
-This script demonstrates how to use the Topo4MEC dataset.
+This script demonstrates how to use the Pakistan dataset.
 """
 
 import os
@@ -15,54 +15,78 @@ import pandas as pd
 from core.env import Env
 from core.task import Task
 from core.vis import *
-from eval.benchmarks.Topo4MEC.scenario import Scenario
+from core.vis.vis_stats import VisStats
+from eval.benchmarks.Pakistan.scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
-from policies.demo.demo_random import DemoRandom  # policy
 from policies.demo.demo_greedy import GreedyPolicy
-from policies.demo.demo_round_robin import RoundRobinPolicy
+
+
+def create_log_dir(algo_name, **params):
+    """Creates a directory for storing the training/testing metrics logs.
+
+    Args:
+        algo_name (str): The name of the algorithm.
+        **params: Additional parameters to be included in the directory name.
+
+    Returns:
+        str: The path to the created log directory.
+    """
+    # Create the algorithm-specific directory if it doesn't exist
+    algo_dir = f"logs/{algo_name}"
+    if not os.path.exists(algo_dir):
+        os.makedirs(algo_dir)
+
+    # Build the parameterized part of the directory name
+    params_str = ""
+    for key, value in params.items():
+        params_str += f"{key}_{value}_"
+    index = 0  # Find an available directory index
+    log_dir = f"{algo_dir}/{params_str}{index}"
+    while os.path.exists(log_dir):
+        index += 1
+        log_dir = f"{algo_dir}/{params_str}{index}"
+    
+    # Create the final log directory
+    os.makedirs(log_dir, exist_ok=True)
+    
+    return log_dir
 
 
 def main():
-    flag = '25N50E'
-    # flag = '50N50E'
-    # flag = '100N150E'
-    # flag = 'MilanCityCenter'
-
+    flag = 'Tuple30K'
+    # flag = 'Tuple50K'
+    # flag = 'Tuple100K'
+    
     # Create the environment with the specified scenario and configuration files.
-    scenario = Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/{flag}/config.json", flag=flag)
-    env = Env(scenario, config_file="core/configs/env_config_null.json")
+    scenario=Scenario(config_file=f"eval/benchmarks/Pakistan/data/{flag}/config.json", flag=flag)
+    env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
 
     # Load the test dataset.
-    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/{flag}/testset.csv")
-    test_tasks = list(data.iloc[:].values)
+    data = pd.read_csv(f"eval/benchmarks/Pakistan/data/{flag}/testset.csv")
 
     # Init the policy.
-    # policy = DemoRandom()
-    # policy = RoundRobinPolicy()
     policy = GreedyPolicy()
 
     # Begin the simulation.
-    until = 1
+    until = 0
     launched_task_cnt = 0
-    for task_info in test_tasks:
-        # Task properties:
-        # ['TaskName', 'GenerationTime', 'TaskID', 'TaskSize', 'CyclesPerBit', 
-        #  'TransBitRate', 'DDL', 'SrcName', 'DstName']
-        generated_time = task_info[1]
-        task = Task(task_id=task_info[2],
-                    task_size=task_info[3],
-                    cycles_per_bit=task_info[4],
-                    trans_bit_rate=task_info[5],
-                    ddl=task_info[6],
-                    src_name=task_info[7],
-                    task_name=task_info[0])
+    path_dir = create_log_dir("vis/DemoGreedy", flag=flag)
+    for i, task_info in data.iterrows():
+        generated_time = task_info['GenerationTime']
+        task = Task(task_id=task_info['TaskID'],
+                    task_size=task_info['TaskSize'],
+                    cycles_per_bit=task_info['CyclesPerBit'],
+                    trans_bit_rate=task_info['TransBitRate'],
+                    ddl=task_info['DDL'],
+                    src_name='e0',
+                    task_name=task_info['TaskName'])
 
         while True:
             # Catch completed task information.
             while env.done_task_info:
                 item = env.done_task_info.pop(0)
-
-            if env.now == generated_time:
+            
+            if env.now >= generated_time:
                 dst_id = policy.act(env, task)  # offloading decision
                 dst_name = env.scenario.node_id2name[dst_id]
                 env.process(task=task, dst_name=dst_name)
@@ -105,6 +129,10 @@ def main():
     print("-----------------------------------------------\n")
 
     env.close()
+    
+    # Stats Visualization
+    vis = VisStats(path_dir)
+    vis.vis(env)
 
 
 if __name__ == '__main__':
