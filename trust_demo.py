@@ -114,7 +114,7 @@ def main():
         # time.sleep(0.2)
 
     # Continue the simulation until the last task successes/fails.
-    while env.process_task_cnt < len(simulated_tasks):
+    while env.task_count < len(simulated_tasks):
         until += 1
         try:
             env.compute_trust()
