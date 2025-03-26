@@ -22,9 +22,11 @@ from examples.scenarios.zam_scenario import Scenario
 
 def error_handler_1(error: Exception):
     print(1, error)
+    exit()
 
 def error_handler_2(error: Exception):
     print(2, error)
+    exit()
 
 def error_handler_3(error: Exception):
     print(3, error)
