@@ -1,7 +1,7 @@
 {
     "Nodes": [
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n0",
             "NodeId": 0,
             "MaxCpuFreq": 20,
@@ -12,7 +12,7 @@
             "ExeEnergyCoef": 0.04
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n1",
             "NodeId": 1,
             "MaxCpuFreq": 17,
@@ -23,7 +23,7 @@
             "ExeEnergyCoef": 0.91
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n2",
             "NodeId": 2,
             "MaxCpuFreq": 22,
@@ -34,7 +34,7 @@
             "ExeEnergyCoef": 0.91
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "Node",
             "NodeName": "n3",
             "NodeId": 3,
             "MaxCpuFreq": 6,
@@ -45,7 +45,7 @@
             "ExeEnergyCoef": 0.99
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n4",
             "NodeId": 4,
             "MaxCpuFreq": 30,
@@ -56,7 +56,7 @@
             "ExeEnergyCoef": 0.58
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "Node",
             "NodeName": "n5",
             "NodeId": 5,
             "MaxCpuFreq": 6,
@@ -67,7 +67,7 @@
             "ExeEnergyCoef": 0.36
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n6",
             "NodeId": 6,
             "MaxCpuFreq": 26,
@@ -78,7 +78,7 @@
             "ExeEnergyCoef": 0.86
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n7",
             "NodeId": 7,
             "MaxCpuFreq": 10,
@@ -89,7 +89,7 @@
             "ExeEnergyCoef": 0.85
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n8",
             "NodeId": 8,
             "MaxCpuFreq": 16,
@@ -100,7 +100,7 @@
             "ExeEnergyCoef": 0.63
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n9",
             "NodeId": 9,
             "MaxCpuFreq": 23,
@@ -111,7 +111,7 @@
             "ExeEnergyCoef": 0.74
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n10",
             "NodeId": 10,
             "MaxCpuFreq": 7,
@@ -122,7 +122,7 @@
             "ExeEnergyCoef": 0.54
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "Node",
             "NodeName": "n11",
             "NodeId": 11,
             "MaxCpuFreq": 26,
@@ -133,7 +133,7 @@
             "ExeEnergyCoef": 0.64
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n12",
             "NodeId": 12,
             "MaxCpuFreq": 12,
@@ -144,7 +144,7 @@
             "ExeEnergyCoef": 0.66
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "Node",
             "NodeName": "n13",
             "NodeId": 13,
             "MaxCpuFreq": 29,
@@ -155,7 +155,7 @@
             "ExeEnergyCoef": 0.26
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n14",
             "NodeId": 14,
             "MaxCpuFreq": 7,
@@ -166,7 +166,7 @@
             "ExeEnergyCoef": 0.99
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n15",
             "NodeId": 15,
             "MaxCpuFreq": 15,
@@ -177,7 +177,7 @@
             "ExeEnergyCoef": 0.04
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n16",
             "NodeId": 16,
             "MaxCpuFreq": 5,
@@ -188,7 +188,7 @@
             "ExeEnergyCoef": 0.86
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n17",
             "NodeId": 17,
             "MaxCpuFreq": 20,
@@ -199,7 +199,7 @@
             "ExeEnergyCoef": 0.66
         },
         {
-            "NodeType": "MaliciousNode",
+            "NodeType": "Node",
             "NodeName": "n18",
             "NodeId": 18,
             "MaxCpuFreq": 16,
@@ -210,7 +210,7 @@
             "ExeEnergyCoef": 0.53
         },
         {
-            "NodeType": "TrustNode",
+            "NodeType": "Node",
             "NodeName": "n19",
             "NodeId": 19,
             "MaxCpuFreq": 13,

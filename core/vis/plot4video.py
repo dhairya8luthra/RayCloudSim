@@ -38,8 +38,7 @@ def plot_frame(graph, values, config_file, save_as):
     node_data = nx.get_node_attributes(graph, 'data')
     labels = {k: v.node_id for k, v in node_data.items()}
     if json_node['Basic']['colorWeight'] == 'on':
-        node_color = [colors['red'] if v == 1 else colors['blue'] if v == 0 else colors['green']
-                      for v in values['node'].values()]
+        node_color = [v for k, v in values['node'].items()]
         # node_cmap = plt.cm.get_cmap(json_node['ColorWeight']['cmap'])
         node_cmap_colors = [(0, colors['purple']), (0.25, colors['blue']), (0.5, colors['green']), 
                             (0.75, colors['orange']), (1, colors['red'])]
@@ -67,6 +66,7 @@ def plot_frame(graph, values, config_file, save_as):
         pos=pos,
         node_size=json_node['Basic']['size'],
         node_color=node_color,
+        cmap=node_cmap,
         node_shape=json_node['Basic']['shape'],
         linewidths=json_node['Basic']['linewidths'],
         alpha=json_node['Basic']['alpha'],
