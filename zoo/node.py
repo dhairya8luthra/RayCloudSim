@@ -356,6 +356,7 @@ class ZAMMalicious(ZAMNode):
         
         self.malicious_type = mal_type
         self.normal_threshold = 0
+        self.peerRating2 = {}
 
     def set_malicious_type(self, mal_type: int):
         self.malicious_type = mal_type
@@ -380,5 +381,3 @@ class ZAMMalicious(ZAMNode):
             return 1
         else:
             return 0
-        
-    
