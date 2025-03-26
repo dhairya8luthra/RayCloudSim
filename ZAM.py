@@ -115,7 +115,7 @@ def main():
 
 
     # Continue the simulation until the last task successes/fails.
-    while env.process_task_cnt < len(simulated_tasks):
+    while env.task_count < len(simulated_tasks):
         try:
             env.computeQoS()
         except Exception as e:
