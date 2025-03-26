@@ -473,6 +473,7 @@ class Env:
         # Record simulation completion
         self.logger.log("Simulation completed!")
 
+
 class Env_Trust(Env):
 
     def __init__(self, scenario: BaseScenario, config_file: str, verbose: bool = True, 
@@ -1003,7 +1004,6 @@ class ZAM_env(Env_Trust):
 
 
     def toggle_status(self, arrival_times, arrival_pointer):
-        return
         now = int(self.controller.now)
 
         for _, node in self.scenario.get_nodes().items():
@@ -1102,19 +1102,19 @@ class ZAM_env(Env_Trust):
         COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
 
         # Update over all the nodes
-        for _, target in self.scenario.get_nodes().items():
+        for _, node in self.scenario.get_nodes().items():
 
-            if isinstance(target, ZAMNode) and target.get_online():
-                old_trust = self.global_trust[target]
+            if isinstance(node, ZAMNode) and node.get_online():
+                old_trust = self.global_trust[node]
                 if(self.compute_final_adaptive_weights_flag):
-                     compute_trust = self.compute_final_adaptive_weights(target)
+                     compute_trust = self.compute_final_adaptive_weights(node)
                 else:
-                     compute_trust = self.compute_final(target)
+                     compute_trust = self.compute_final(node)
                 new_trust = (COMPUTE_WEIGHT * compute_trust) + (OLD_WEIGHT * old_trust)
                 if(new_trust > 1.0):
                     new_trust = 1.0
                     print("Trust Value Exceeded 1.0")
-                self.global_trust[target] = new_trust
+                self.global_trust[node] = new_trust
                 print(new_trust)
 
         
@@ -1125,8 +1125,6 @@ class ZAM_env(Env_Trust):
         # Label the malicious
         trust_list = []
         for node, trust in self.global_trust.items():
-             if not node.get_online():
-                 continue
              trust_list.append(trust)
         trust_list = np.array(trust_list)
         mean_trust = trust_list.mean()
@@ -1148,20 +1146,21 @@ class ZAM_env(Env_Trust):
 
         print("=== ===")
         for node, trust in self.global_trust.items():
-            z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-            if (z_trust <= lower_bound or z_trust >= higher_bound) and isinstance(node, ZAMNode):
-                print(f"Malicious Node Detected: {node.node_id}")
-                zscore_detected.append(node.node_id)
-                # Update the confusion metrics
-                if isinstance(node, ZAMMalicious):
-                    self.true_positive += 1
+            if node.get_online():
+                z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
+                if (z_trust <= lower_bound or z_trust >= higher_bound) and isinstance(node, ZAMNode):
+                    print(f"Malicious Node Detected: {node.node_id}")
+                    zscore_detected.append(node.node_id)
+                    # Update the confusion metrics
+                    if isinstance(node, ZAMMalicious):
+                        self.true_positive += 1
+                    else:
+                        self.false_positive += 1
                 else:
-                    self.false_positive += 1
-            else:
-                if isinstance(node, ZAMMalicious):
-                    self.true_negative += 1
-                else:
-                    self.false_negative += 1
+                    if isinstance(node, ZAMMalicious):
+                        self.true_negative += 1
+                    else:
+                        self.false_negative += 1
 
         print("=== ===")
         if zscore_detected:
@@ -1194,16 +1193,17 @@ class ZAM_env(Env_Trust):
 
         # Update the confusion metrics
         for node, _ in self.global_trust.items():
-            if node.node_id not in boxplot_detected:
-                if isinstance(node, ZAMMalicious):
-                    self.true_negative_boxplot += 1
+            if node.get_online():
+                if node.node_id not in boxplot_detected:
+                    if isinstance(node, ZAMMalicious):
+                        self.true_negative_boxplot += 1
+                    else:
+                        self.false_negative_boxplot += 1
                 else:
-                    self.false_negative_boxplot += 1
-            else:
-                if isinstance(node, ZAMMalicious):
-                    self.true_positive_boxplot += 1
-                else:
-                    self.false_positive_boxplot += 1
+                    if isinstance(node, ZAMMalicious):
+                        self.true_positive_boxplot += 1
+                    else:
+                        self.false_positive_boxplot += 1
 
         print("----------------------------------------------------")
         if boxplot_detected:
