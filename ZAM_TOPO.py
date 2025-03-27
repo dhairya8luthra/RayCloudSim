@@ -65,6 +65,7 @@ def error_handler_3(error: Exception):
     print(3, error)
 
 def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
+    print(error.args[0])
     _, _, task_id = error.args[0]
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
@@ -91,7 +92,7 @@ def main():
     arrival_times = {node_name: [] for node_name in env.scenario.node_id2name.values()}
     arrival_pointer = {node_name: 0 for node_name in env.scenario.node_id2name.values()}
     task_assign = {}  # Maps task_id to destination node name
-    until = 0
+    until = 1
     launched_task_cnt = 0
     path_dir = create_log_dir("vis/DemoGreedy", flag=flag)
     for i, task_info in data.iterrows():
