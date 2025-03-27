@@ -19,7 +19,6 @@ from core.vis.vis_stats import VisStats
 from eval.benchmarks.Pakistan.scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
 from policies.demo.demo_greedy import GreedyPolicy
-from policies.demo.demo_round_robin import RoundRobinPolicy
 
 
 def create_log_dir(algo_name, **params):
@@ -59,14 +58,14 @@ def main():
     # flag = 'Tuple100K'
     
     # Create the environment with the specified scenario and configuration files.
-    scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/{flag}/config.json", flag=flag)
+    scenario=Scenario(config_file=f"eval/benchmarks/Pakistan/data/{flag}/config.json", flag=flag)
     env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
 
     # Load the test dataset.
-    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/{flag}/testset.csv")
+    data = pd.read_csv(f"eval/benchmarks/Pakistan/data/{flag}/testset.csv")
 
     # Init the policy.
-    policy = RoundRobinPolicy()
+    policy = GreedyPolicy()
 
     # Begin the simulation.
     until = 0
@@ -79,7 +78,7 @@ def main():
                     cycles_per_bit=task_info['CyclesPerBit'],
                     trans_bit_rate=task_info['TransBitRate'],
                     ddl=task_info['DDL'],
-                    src_name=task_info['SrcName'],
+                    src_name='e0',
                     task_name=task_info['TaskName'])
 
         while True:
