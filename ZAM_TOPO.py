@@ -65,7 +65,6 @@ def error_handler_3(error: Exception):
     print(3, error)
 
 def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
-    print(error.args[0])
     _, _, task_id = error.args[0]
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
@@ -198,8 +197,10 @@ def main():
     # Plot trust values of nodes over time.
     plt.figure(figsize=(10, 6))
     # Assuming env.trust_values is a dict mapping node IDs (or names) to a list of trust values.
-    nodes_to_plot = list(env.trust_values.keys()) if hasattr(env, 'trust_values') else []
-    malicious_nodes = []  # Specify malicious node ids if applicable.
+    nodes_to_plot = [i for i in range(len(env.trust_values))]
+    print("Nodes to plot:", nodes_to_plot)
+    print(nodes_to_plot)
+    malicious_nodes = [3, 4, 10, 12, 14, 21, 23]  # Specify malicious node ids if applicable.
     for node in nodes_to_plot:
         if node in malicious_nodes:
             plt.plot(env.trust_values[node][:time_slice], label=f'Node n{node}', linewidth=3)
@@ -253,7 +254,7 @@ def main():
                 time_index = int(detection_time)
                 valid_nodes = []
                 for node_id in node_ids:
-                    if time_index < len(env.trust_values.get(node_id, [])):
+                    if time_index < len(env.trust_values):
                         valid_nodes.append(str(node_id))
                         zscore_x.append(time_index)
                         zscore_y.append(env.trust_values[node_id][time_index])
@@ -281,7 +282,7 @@ def main():
                 time_index = int(detection_time)
                 valid_nodes = []
                 for node_id in node_ids:
-                    if time_index < len(env.trust_values.get(node_id, [])):
+                    if time_index < len(env.trust_values):
                         valid_nodes.append(str(node_id))
                         boxplot_x.append(time_index)
                         boxplot_y.append(env.trust_values[node_id][time_index])
