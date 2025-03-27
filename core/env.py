@@ -129,7 +129,7 @@ class Env:
     def _validate_config(self) -> None:
         """Validate configuration to ensure the number of tracked nodes does not exceed the limit."""
 
-        max_nodes = 20
+        max_nodes = 100
 
         target_nodes = len(self.config['VisFrame']['TargetNodeList'])
         assert target_nodes <= max_nodes, (

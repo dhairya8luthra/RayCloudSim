@@ -1,4 +1,5 @@
 from core.base_scenario import BaseScenario
+from examples.scenarios.zam_scenario import Scenario
 
 ROOT_PATH = 'eval/benchmarks/Topo4MEC/data'
 
@@ -19,3 +20,14 @@ class Scenario(BaseScenario):
     
     def status(self):
         pass
+
+class ZAM_TOPO_Scenario(Scenario):
+    def __init__(self, config_file, flag):
+        
+        
+        assert flag in ['25N50E', '50N50E', '100N150E', 'MilanCityCenter'], \
+            f"Invalid flag={flag}"
+        
+        self.flag = flag
+        self.config_file = config_file
+        self.config = self.load_config(config_file)
