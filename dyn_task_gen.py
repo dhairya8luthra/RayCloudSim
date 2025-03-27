@@ -22,6 +22,7 @@ from policies.demo.demo_greedy import GreedyPolicy
 from policies.demo.demo_round_robin import RoundRobinPolicy
 
 
+
 def create_log_dir(algo_name, **params):
     """Creates a directory for storing the training/testing metrics logs.
 
@@ -54,7 +55,7 @@ def create_log_dir(algo_name, **params):
 
 
 def main():
-    flag = 'Tuple30K'
+    flag = ''
     # flag = 'Tuple50K'
     # flag = 'Tuple100K'
     
