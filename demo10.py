@@ -162,7 +162,7 @@ def create_env(scenario):
 
 
 def main():
-    flag = 'Tuple30K'
+    flag = 'Tuple100K'
 
     scenario = Scenario(config_file=f"eval/benchmarks/Pakistan/data/{flag}/config.json", flag=flag)
     env = create_env(scenario)

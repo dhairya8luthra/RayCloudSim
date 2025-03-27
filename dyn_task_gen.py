@@ -1,90 +1,140 @@
+"""
+This script demonstrates how to use the Pakistan dataset.
+"""
+
 import os
 import sys
-import random
-import networkx as nx
 
-from core.env import Env_Trust
+current_file_path = os.path.abspath(__file__)
+current_dir = os.path.dirname(current_file_path)
+parent_dir = os.path.dirname(current_dir)
+sys.path.insert(0, parent_dir)
+
+import pandas as pd
+
+from core.env import Env
 from core.task import Task
 from core.vis import *
-from examples.scenarios.trust_scenario_1 import Scenario
+from core.vis.vis_stats import VisStats
+from eval.benchmarks.Pakistan.scenario import Scenario
+from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
+from policies.demo.demo_greedy import GreedyPolicy
+from policies.demo.demo_round_robin import RoundRobinPolicy
 
-def error_handler(error: Exception):
-    pass
+
+def create_log_dir(algo_name, **params):
+    """Creates a directory for storing the training/testing metrics logs.
+
+    Args:
+        algo_name (str): The name of the algorithm.
+        **params: Additional parameters to be included in the directory name.
+
+    Returns:
+        str: The path to the created log directory.
+    """
+    # Create the algorithm-specific directory if it doesn't exist
+    algo_dir = f"logs/{algo_name}"
+    if not os.path.exists(algo_dir):
+        os.makedirs(algo_dir)
+
+    # Build the parameterized part of the directory name
+    params_str = ""
+    for key, value in params.items():
+        params_str += f"{key}_{value}_"
+    index = 0  # Find an available directory index
+    log_dir = f"{algo_dir}/{params_str}{index}"
+    while os.path.exists(log_dir):
+        index += 1
+        log_dir = f"{algo_dir}/{params_str}{index}"
+    
+    # Create the final log directory
+    os.makedirs(log_dir, exist_ok=True)
+    
+    return log_dir
+
 
 def main():
-    scenario = Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
-    env = Env_Trust(scenario, config_file="core/configs/env_config.json")
+    flag = 'Tuple30K'
+    # flag = 'Tuple50K'
+    # flag = 'Tuple100K'
+    
+    # Create the environment with the specified scenario and configuration files.
+    scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/{flag}/config.json", flag=flag)
+    env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
 
-    NUM_TASKS = 20
-    NODES = ["n" + str(i) for i in range(13)]
-    ONLINE_NODES = []
-    ACTIVE_NODES = []
-    until = 1
-    
-    env.up = {}
-    env.down = {}
-    
-    for i in range(NUM_TASKS):
-        up_nodes = random.sample([n for n in NODES if n not in ACTIVE_NODES], random.randint(1, 4))
-        down_nodes = random.sample(ONLINE_NODES, random.randint(0, len(ONLINE_NODES)//2))
-        
-        env.up[until] = up_nodes
-        env.down[until] = down_nodes
-        
-        for node in up_nodes:
-            if node not in ONLINE_NODES:
-                ONLINE_NODES.append(node)
-        
-        for node in down_nodes:
-            if node in ONLINE_NODES:
-                ONLINE_NODES.remove(node)
-                if node in ACTIVE_NODES:
-                    ACTIVE_NODES.remove(node)
-                    env.process_task_cnt += len(env.task_queues.get(node, []))
-                    env.task_queues[node] = []
-        
-        tasks = []
-        for _ in range(random.randint(1, 3)):
-            src = random.choice(ONLINE_NODES)
-            dst = random.choice(ONLINE_NODES)
-            if src == dst or not len(scenario.infrastructure.get_shortest_path(src_name=src, dst_name=dst)) == 0:
-                continue
-            task = Task(task_id=i,
-                        task_size=random.randint(10, 100),
-                        cycles_per_bit=random.randint(1, 10),
-                        trans_bit_rate=random.randint(20, 100),
-                        ddl=random.randint(50, 100),
-                        src_name=src,
-                        task_name=f"t{i}")
-            tasks.append((task, dst))
-        
-        for task, dst in tasks:
-            env.process(task=task, dst_name=dst)
-        
-        while env.done_task_info:
-            item = env.done_task_info.pop(0)
-        
-        try:
-            env.update_trust()
-            env.toggle_status()
-            env.run(until=until)
-        except Exception as e:
-            error_handler(e)
-        
-        until += 1
-    
-    while env.process_task_cnt < NUM_TASKS:
-        print(f"Process task count: {env.process_task_cnt}")
+    # Load the test dataset.
+    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/{flag}/testset.csv")
+
+    # Init the policy.
+    policy = RoundRobinPolicy()
+
+    # Begin the simulation.
+    until = 0
+    launched_task_cnt = 0
+    path_dir = create_log_dir("vis/DemoGreedy", flag=flag)
+    for i, task_info in data.iterrows():
+        generated_time = task_info['GenerationTime']
+        task = Task(task_id=task_info['TaskID'],
+                    task_size=task_info['TaskSize'],
+                    cycles_per_bit=task_info['CyclesPerBit'],
+                    trans_bit_rate=task_info['TransBitRate'],
+                    ddl=task_info['DDL'],
+                    src_name=task_info['SrcName'],
+                    task_name=task_info['TaskName'])
+
+        while True:
+            # Catch completed task information.
+            while env.done_task_info:
+                item = env.done_task_info.pop(0)
+            
+            if env.now >= generated_time:
+                dst_id = policy.act(env, task)  # offloading decision
+                dst_name = env.scenario.node_id2name[dst_id]
+                env.process(task=task, dst_name=dst_name)
+                launched_task_cnt += 1
+                break
+
+            # Execute the simulation with error handler.
+            try:
+                env.run(until=until)
+            except Exception as e:
+                pass
+
+            until += 1
+
+    # Continue the simulation until the last task successes/fails.
+    while env.task_count < launched_task_cnt:
         until += 1
         try:
-            env.update_trust()
-            env.toggle_status()
             env.run(until=until)
         except Exception as e:
-            error_handler(e)
-    
+            pass
+
+    # Evaluation
+    print("\n===============================================")
+    print("Evaluation:")
+    print("===============================================\n")
+
+    print("-----------------------------------------------")
+    m1 = SuccessRate()
+    r1 = m1.eval(env.logger.task_info)
+    print(f"The success rate of all tasks: {r1:.4f}")
+    print("-----------------------------------------------\n")
+
+    print("-----------------------------------------------")
+    m2 = AvgLatency()
+    r2 = m2.eval(env.logger.task_info)
+    print(f"The average latency per task: {r2:.4f}")
+
+    print(f"The average energy consumption per node: {env.avg_node_energy():.4f}")
+    print("-----------------------------------------------\n")
+
     env.close()
-    vis_frame2video(env)
+    
+    # Stats Visualization
+    vis = VisStats(path_dir)
+    vis.vis(env)
+
 
 if __name__ == '__main__':
     main()
