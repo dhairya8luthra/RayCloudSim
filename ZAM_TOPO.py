@@ -196,11 +196,34 @@ def main():
     # ------------------ Trust-based Visualization ------------------
     # Plot trust values of nodes over time.
     plt.figure(figsize=(10, 6))
+
+        # Print the confusion metrics - Z Score
+    print("------------------------------------------------------")
+    print("Z-Score Confusion Matrix:")
+    print("True Positives:", env.true_positive)
+    print("True Negatives:", env.true_negative)
+    print("False Positives:", env.false_positive)
+    print("False Negatives:", env.false_negative)
+    print("Accuracy:", (env.true_positive + env.true_negative) / (env.true_positive + env.true_negative + env.false_positive + env.false_negative))
+    print("Precision:", env.true_positive / (env.true_positive + env.false_positive))
+    print("F1 Score:", (2 * env.true_positive) / (2 * env.true_positive + env.false_positive + env.false_negative))
+    print("------------------------------------------------------\n")
+
+    # Print the confusion metrics - Boxplot
+    print("------------------------------------------------------")
+    print("Boxplot Confusion Matrix:")
+    print("True Positives:", env.true_positive_boxplot)
+    print("True Negatives:", env.true_negative_boxplot)
+    print("False Positives:", env.false_positive_boxplot)
+    print("False Negatives:", env.false_negative_boxplot)
+    print("Accuracy:", (env.true_positive_boxplot + env.true_negative_boxplot) / (env.true_positive_boxplot + env.true_negative_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("Precision:", env.true_positive_boxplot / (env.true_positive_boxplot + env.false_positive_boxplot))
+    print("F1 Score:", (2 * env.true_positive_boxplot) / (2 * env.true_positive_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("------------------------------------------------------\n")
+
     # Assuming env.trust_values is a dict mapping node IDs (or names) to a list of trust values.
     nodes_to_plot = [i for i in range(len(env.trust_values))]
-    print("Nodes to plot:", nodes_to_plot)
-    print(nodes_to_plot)
-    malicious_nodes = [3, 4, 10, 12, 14, 21, 23]  # Specify malicious node ids if applicable.
+    malicious_nodes = [3, 4, 10, 12, 14, 21, 23]
     for node in nodes_to_plot:
         if node in malicious_nodes:
             plt.plot(env.trust_values[node][:time_slice], label=f'Node n{node}', linewidth=3)
@@ -209,27 +232,26 @@ def main():
             
     # Prepare lists to collect attack marker coordinates.
     bsa_x, bsa_y = [], []      
-    onoff_x, onoff_y = [], []     
-    if hasattr(env, 'attacks'):
-        for attack_time, events in env.attacks.items():
-            if attack_time < 0 or attack_time > time_slice:
+    onoff_x, onoff_y = [], []
+    for attack_time, events in env.attacks.items():
+        if attack_time < 0 or attack_time > time_slice:
+            continue
+        for event in events:
+            attacking_node = event.get("attacking_node", "")
+            attack_type = event.get("attack_type", "")
+            try:
+                node_index = int(attacking_node.strip('n'))
+            except Exception as e:
                 continue
-            for event in events:
-                attacking_node = event.get("attacking_node", "")
-                attack_type = event.get("attack_type", "")
-                try:
-                    node_index = int(attacking_node.strip('n'))
-                except Exception as e:
-                    continue
-                time_index = int(attack_time)
-                if time_index < len(env.trust_values.get(node_index, [])):
-                    y_value = env.trust_values[node_index][time_index]
-                    if attack_type == "ballot stuffing":
-                        bsa_x.append(time_index)
-                        bsa_y.append(y_value)
-                    elif attack_type == "on-off attack":
-                        onoff_x.append(time_index)
-                        onoff_y.append(y_value)
+            time_index = int(attack_time)
+            if time_index < len(env.trust_values.get(node_index, [])):
+                y_value = env.trust_values[node_index][time_index]
+                if attack_type == "ballot stuffing":
+                    bsa_x.append(time_index)
+                    bsa_y.append(y_value)
+                elif attack_type == "on-off attack":
+                    onoff_x.append(time_index)
+                    onoff_y.append(y_value)
     if bsa_x:
         plt.scatter(bsa_x, bsa_y, color='blue', marker='x', s=100, label='BSA Attack')
     if onoff_x:

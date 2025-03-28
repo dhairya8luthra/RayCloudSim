@@ -16,11 +16,10 @@ from core.env import Env
 from core.task import Task
 from core.vis import *
 from core.vis.vis_stats import VisStats
-from examples.scenarios.zam_scenario import Scenario
+from eval.benchmarks.Pakistan.scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
 from policies.demo.demo_greedy import GreedyPolicy
 from policies.demo.demo_round_robin import RoundRobinPolicy
-
 
 
 def create_log_dir(algo_name, **params):
@@ -53,24 +52,6 @@ def create_log_dir(algo_name, **params):
     
     return log_dir
 
-def error_handler_1(error: Exception):
-    print(1, error)
-    exit()
-
-def error_handler_2(error: Exception):
-    print(2, error)
-    exit()
-
-def error_handler_3(error: Exception):
-    print(3, error)
-
-def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
-    _, _, task_id = error.args[0]
-    # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
-    node = task_timers[task_id]
-
-    while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] <= now + 2:
-        arrival_pointer[node] += 1
 
 def main():
     flag = 'Tuple30K'
@@ -78,10 +59,8 @@ def main():
     # flag = 'Tuple100K'
     
     # Create the environment with the specified scenario and configuration files.
-    scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/25N50E/config.json")
+    scenario=Scenario(config_file=f"eval/benchmarks/Pakistan/data/{flag}/config.json", flag=flag)
     env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
-
-    time_slice = 500
 
     # Load the test dataset.
     data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/25N50E/testset.csv")
@@ -93,7 +72,6 @@ def main():
     until = 0
     launched_task_cnt = 0
     path_dir = create_log_dir("vis/DemoGreedy", flag=flag)
-
     for i, task_info in data.iterrows():
         generated_time = task_info['GenerationTime']
         task = Task(task_id=task_info['TaskID'],
@@ -101,7 +79,7 @@ def main():
                     cycles_per_bit=task_info['CyclesPerBit'],
                     trans_bit_rate=task_info['TransBitRate'],
                     ddl=task_info['DDL'],
-                    src_name=task_info['SrcName'],
+                    src_name='e0',
                     task_name=task_info['TaskName'])
 
         while True:

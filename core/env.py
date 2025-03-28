@@ -911,7 +911,7 @@ class ZAM_env(Env_Trust):
         self.ONLINE_NODES = [node for _, node in self.scenario.get_nodes().items() if node.get_online()]
         self.ACTIVE_NODES = []
         self.trust_messages = []
-        self.global_trust = {node: 0.000001 for _, node in self.scenario.get_nodes().items()}
+        self.global_trust = {node: 0.000000001 for _, node in self.scenario.get_nodes().items()}
         self.trust_values = [[] for _ in range(len(self.scenario.get_nodes()))]
         self.attacks = {} 
         self.onoffattackflag = True
