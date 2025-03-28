@@ -19,6 +19,7 @@ from core.vis.vis_stats import VisStats
 from eval.benchmarks.Pakistan.scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
 from policies.demo.demo_greedy import GreedyPolicy
+from policies.demo.demo_round_robin import RoundRobinPolicy
 
 
 def create_log_dir(algo_name, **params):
@@ -62,10 +63,10 @@ def main():
     env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
 
     # Load the test dataset.
-    data = pd.read_csv(f"eval/benchmarks/Pakistan/data/{flag}/testset.csv")
+    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/25N50E/testset.csv")
 
     # Init the policy.
-    policy = GreedyPolicy()
+    policy = RoundRobinPolicy()
 
     # Begin the simulation.
     until = 0

@@ -65,7 +65,6 @@ def error_handler_3(error: Exception):
     print(3, error)
 
 def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
-    print(error.args[0])
     _, _, task_id = error.args[0]
     # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
@@ -197,9 +196,34 @@ def main():
     # ------------------ Trust-based Visualization ------------------
     # Plot trust values of nodes over time.
     plt.figure(figsize=(10, 6))
+
+        # Print the confusion metrics - Z Score
+    print("------------------------------------------------------")
+    print("Z-Score Confusion Matrix:")
+    print("True Positives:", env.true_positive)
+    print("True Negatives:", env.true_negative)
+    print("False Positives:", env.false_positive)
+    print("False Negatives:", env.false_negative)
+    print("Accuracy:", (env.true_positive + env.true_negative) / (env.true_positive + env.true_negative + env.false_positive + env.false_negative))
+    print("Precision:", env.true_positive / (env.true_positive + env.false_positive))
+    print("F1 Score:", (2 * env.true_positive) / (2 * env.true_positive + env.false_positive + env.false_negative))
+    print("------------------------------------------------------\n")
+
+    # Print the confusion metrics - Boxplot
+    print("------------------------------------------------------")
+    print("Boxplot Confusion Matrix:")
+    print("True Positives:", env.true_positive_boxplot)
+    print("True Negatives:", env.true_negative_boxplot)
+    print("False Positives:", env.false_positive_boxplot)
+    print("False Negatives:", env.false_negative_boxplot)
+    print("Accuracy:", (env.true_positive_boxplot + env.true_negative_boxplot) / (env.true_positive_boxplot + env.true_negative_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("Precision:", env.true_positive_boxplot / (env.true_positive_boxplot + env.false_positive_boxplot))
+    print("F1 Score:", (2 * env.true_positive_boxplot) / (2 * env.true_positive_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("------------------------------------------------------\n")
+
     # Assuming env.trust_values is a dict mapping node IDs (or names) to a list of trust values.
-    nodes_to_plot = list(env.trust_values.keys()) if hasattr(env, 'trust_values') else []
-    malicious_nodes = []  # Specify malicious node ids if applicable.
+    nodes_to_plot = [i for i in range(len(env.trust_values))]
+    malicious_nodes = [3, 4, 10, 12, 14, 21, 23]
     for node in nodes_to_plot:
         if node in malicious_nodes:
             plt.plot(env.trust_values[node][:time_slice], label=f'Node n{node}', linewidth=3)
@@ -208,27 +232,26 @@ def main():
             
     # Prepare lists to collect attack marker coordinates.
     bsa_x, bsa_y = [], []      
-    onoff_x, onoff_y = [], []     
-    if hasattr(env, 'attacks'):
-        for attack_time, events in env.attacks.items():
-            if attack_time < 0 or attack_time > time_slice:
+    onoff_x, onoff_y = [], []
+    for attack_time, events in env.attacks.items():
+        if attack_time < 0 or attack_time > time_slice:
+            continue
+        for event in events:
+            attacking_node = event.get("attacking_node", "")
+            attack_type = event.get("attack_type", "")
+            try:
+                node_index = int(attacking_node.strip('n'))
+            except Exception as e:
                 continue
-            for event in events:
-                attacking_node = event.get("attacking_node", "")
-                attack_type = event.get("attack_type", "")
-                try:
-                    node_index = int(attacking_node.strip('n'))
-                except Exception as e:
-                    continue
-                time_index = int(attack_time)
-                if time_index < len(env.trust_values.get(node_index, [])):
-                    y_value = env.trust_values[node_index][time_index]
-                    if attack_type == "ballot stuffing":
-                        bsa_x.append(time_index)
-                        bsa_y.append(y_value)
-                    elif attack_type == "on-off attack":
-                        onoff_x.append(time_index)
-                        onoff_y.append(y_value)
+            time_index = int(attack_time)
+            if time_index < len(env.trust_values.get(node_index, [])):
+                y_value = env.trust_values[node_index][time_index]
+                if attack_type == "ballot stuffing":
+                    bsa_x.append(time_index)
+                    bsa_y.append(y_value)
+                elif attack_type == "on-off attack":
+                    onoff_x.append(time_index)
+                    onoff_y.append(y_value)
     if bsa_x:
         plt.scatter(bsa_x, bsa_y, color='blue', marker='x', s=100, label='BSA Attack')
     if onoff_x:
@@ -253,7 +276,7 @@ def main():
                 time_index = int(detection_time)
                 valid_nodes = []
                 for node_id in node_ids:
-                    if time_index < len(env.trust_values.get(node_id, [])):
+                    if time_index < len(env.trust_values):
                         valid_nodes.append(str(node_id))
                         zscore_x.append(time_index)
                         zscore_y.append(env.trust_values[node_id][time_index])
@@ -281,7 +304,7 @@ def main():
                 time_index = int(detection_time)
                 valid_nodes = []
                 for node_id in node_ids:
-                    if time_index < len(env.trust_values.get(node_id, [])):
+                    if time_index < len(env.trust_values):
                         valid_nodes.append(str(node_id))
                         boxplot_x.append(time_index)
                         boxplot_y.append(env.trust_values[node_id][time_index])
