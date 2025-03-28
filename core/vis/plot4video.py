@@ -32,7 +32,7 @@ def plot_frame(graph, values, config_file, save_as):
         json_node = json_object['Node']
         json_edge = json_object['Edge']
     
-    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(17, 15))
     plt.title(f"{values['now']}")
 
     node_data = nx.get_node_attributes(graph, 'data')

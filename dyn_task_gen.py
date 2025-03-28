@@ -74,8 +74,8 @@ def main():
     # flag = 'Tuple100K'
     
     # Create the environment with the specified scenario and configuration files.
-    scenario=Scenario(config_file=f"examples/scenarios/configs/trust_config_1.json")
-    env = ZAM_env(scenario, config_file="core/configs/env_config_null.json")
+    scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/25N50E/config.json")
+    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
 
     time_slice = 500
 
@@ -83,7 +83,7 @@ def main():
     next_arrival = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
 
     # Load the test dataset.
-    data = pd.read_csv(f"examples/dataset/demo3_dataset.csv")
+    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/25N50E/testset.csv")
     simulated_tasks = list(data.iloc[:].values)
 
     # Init the policy.
@@ -209,7 +209,34 @@ def main():
     # vis = VisStats(path_dir)
     # vis.vis(env)
 
-    vis_frame2video(env)
+    # Print the confusion metrics - Z Score
+    print("------------------------------------------------------")
+    print("Z-Score Confusion Matrix:")
+    print("True Positives:", env.true_positive)
+    print("True Negatives:", env.true_negative)
+    print("False Positives:", env.false_positive)
+    print("False Negatives:", env.false_negative)
+    print("Accuracy:", (env.true_positive + env.true_negative) / (env.true_positive + env.true_negative + env.false_positive + env.false_negative))
+    print("Precision:", env.true_positive / (env.true_positive + env.false_positive))
+    print("F1 Score:", (2 * env.true_positive) / (2 * env.true_positive + env.false_positive + env.false_negative))
+    print("------------------------------------------------------\n")
+
+    # Print the confusion metrics - Boxplot
+    print("------------------------------------------------------")
+    print("Boxplot Confusion Matrix:")
+    print("True Positives:", env.true_positive_boxplot)
+    print("True Negatives:", env.true_negative_boxplot)
+    print("False Positives:", env.false_positive_boxplot)
+    print("False Negatives:", env.false_negative_boxplot)
+    print("Accuracy:", (env.true_positive_boxplot + env.true_negative_boxplot) / (env.true_positive_boxplot + env.true_negative_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("Precision:", env.true_positive_boxplot / (env.true_positive_boxplot + env.false_positive_boxplot))
+    print("F1 Score:", (2 * env.true_positive_boxplot) / (2 * env.true_positive_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("------------------------------------------------------\n")
+
+    nodes_to_plot = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    malicious_nodes = [2,4]
+
+    # vis_frame2video(env)
 
 if __name__ == '__main__':
     main()

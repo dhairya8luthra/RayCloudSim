@@ -8,8 +8,8 @@
             "MaxBufferSize": 190,
             "IdleEnergyCoef": 0.0091,
             "ExeEnergyCoef": 0.0911,
-            "LocX": 92.287995,
-            "LocY": -56.642953
+            "LocX": 85.834806,
+            "LocY": 95.225762
         },
         {
             "NodeType": "TrustNode",
@@ -19,8 +19,8 @@
             "MaxBufferSize": 120,
             "IdleEnergyCoef": 0.0011,
             "ExeEnergyCoef": 0.0105,
-            "LocX": -117.451292,
-            "LocY": -65.888839
+            "LocX": 92.324024,
+            "LocY": 79.423962
         },
         {
             "NodeType": "TrustNode",
@@ -30,8 +30,8 @@
             "MaxBufferSize": 260,
             "IdleEnergyCoef": 0.0015,
             "ExeEnergyCoef": 0.0152,
-            "LocX": 161.991779,
-            "LocY": 9.654562
+            "LocX": 21.941262,
+            "LocY": 20.72312
         },
         {
             "NodeType": "MaliciousNode",
@@ -41,8 +41,8 @@
             "MaxBufferSize": 150,
             "IdleEnergyCoef": 0.0059,
             "ExeEnergyCoef": 0.0591,
-            "LocX": -64.813565,
-            "LocY": -22.027733
+            "LocX": 25.208638,
+            "LocY": 90.701435
         },
         {
             "NodeType": "MaliciousNode",
@@ -52,8 +52,8 @@
             "MaxBufferSize": 360,
             "IdleEnergyCoef": 0.004,
             "ExeEnergyCoef": 0.0396,
-            "LocX": 26.667703,
-            "LocY": 83.838648
+            "LocX": 64.424741,
+            "LocY": 13.01863
         },
         {
             "NodeType": "TrustNode",
@@ -63,8 +63,8 @@
             "MaxBufferSize": 70,
             "IdleEnergyCoef": 0.0084,
             "ExeEnergyCoef": 0.0843,
-            "LocX": -1.906695,
-            "LocY": 48.990747
+            "LocX": 4.982448,
+            "LocY": 59.054257
         },
         {
             "NodeType": "TrustNode",
@@ -74,8 +74,8 @@
             "MaxBufferSize": 390,
             "IdleEnergyCoef": 0.0091,
             "ExeEnergyCoef": 0.0907,
-            "LocX": 49.455327,
-            "LocY": 72.054955
+            "LocX": 29.603292,
+            "LocY": 15.05763
         },
         {
             "NodeType": "TrustNode",
@@ -85,8 +85,8 @@
             "MaxBufferSize": 340,
             "IdleEnergyCoef": 0.0042,
             "ExeEnergyCoef": 0.0419,
-            "LocX": 28.947951,
-            "LocY": 60.004587
+            "LocX": 29.286863,
+            "LocY": 2.702815
         },
         {
             "NodeType": "TrustNode",
@@ -96,8 +96,8 @@
             "MaxBufferSize": 370,
             "IdleEnergyCoef": 0.0075,
             "ExeEnergyCoef": 0.0754,
-            "LocX": 152.599867,
-            "LocY": 11.61126
+            "LocX": 1.235234,
+            "LocY": 75.557725
         },
         {
             "NodeType": "TrustNode",
@@ -107,8 +107,8 @@
             "MaxBufferSize": 270,
             "IdleEnergyCoef": 0.0096,
             "ExeEnergyCoef": 0.0958,
-            "LocX": -38.641492,
-            "LocY": -5.12023
+            "LocX": 78.5241,
+            "LocY": 85.44903
         },
         {
             "NodeType": "MaliciousNode",
@@ -118,8 +118,8 @@
             "MaxBufferSize": 70,
             "IdleEnergyCoef": 0.0031,
             "ExeEnergyCoef": 0.0309,
-            "LocX": 2.419649,
-            "LocY": -33.301839
+            "LocX": 78.675953,
+            "LocY": 38.042008
         },
         {
             "NodeType": "TrustNode",
@@ -129,8 +129,8 @@
             "MaxBufferSize": 350,
             "IdleEnergyCoef": 0.0092,
             "ExeEnergyCoef": 0.0922,
-            "LocX": 167.58078,
-            "LocY": -35.176935
+            "LocX": 60.423938,
+            "LocY": 46.753357
         },
         {
             "NodeType": "MaliciousNode",
@@ -140,8 +140,8 @@
             "MaxBufferSize": 170,
             "IdleEnergyCoef": 0.003,
             "ExeEnergyCoef": 0.0305,
-            "LocX": 126.341562,
-            "LocY": -66.087995
+            "LocX": 73.230155,
+            "LocY": 17.025728
         },
         {
             "NodeType": "TrustNode",
@@ -151,8 +151,8 @@
             "MaxBufferSize": 220,
             "IdleEnergyCoef": 0.0097,
             "ExeEnergyCoef": 0.0973,
-            "LocX": 45.675307,
-            "LocY": -84.287399
+            "LocX": 3.365682,
+            "LocY": 78.192712
         },
         {
             "NodeType": "MaliciousNode",
@@ -162,8 +162,8 @@
             "MaxBufferSize": 150,
             "IdleEnergyCoef": 0.0081,
             "ExeEnergyCoef": 0.081,
-            "LocX": 167.794114,
-            "LocY": 7.364506
+            "LocX": 86.132492,
+            "LocY": 52.703269
         },
         {
             "NodeType": "TrustNode",
@@ -173,8 +173,8 @@
             "MaxBufferSize": 60,
             "IdleEnergyCoef": 0.001,
             "ExeEnergyCoef": 0.01,
-            "LocX": -42.478796,
-            "LocY": -88.048368
+            "LocX": 20.189763,
+            "LocY": 86.584841
         },
         {
             "NodeType": "TrustNode",
@@ -184,8 +184,8 @@
             "MaxBufferSize": 140,
             "IdleEnergyCoef": 0.0011,
             "ExeEnergyCoef": 0.0114,
-            "LocX": -14.42656,
-            "LocY": -78.694595
+            "LocX": 30.027884,
+            "LocY": 52.855563
         },
         {
             "NodeType": "TrustNode",
@@ -195,8 +195,8 @@
             "MaxBufferSize": 360,
             "IdleEnergyCoef": 0.009,
             "ExeEnergyCoef": 0.0895,
-            "LocX": 140.956003,
-            "LocY": 33.325922
+            "LocX": 11.676812,
+            "LocY": 31.844531
         },
         {
             "NodeType": "TrustNode",
@@ -206,8 +206,8 @@
             "MaxBufferSize": 320,
             "IdleEnergyCoef": 0.0052,
             "ExeEnergyCoef": 0.0524,
-            "LocX": 179.810721,
-            "LocY": 63.105284
+            "LocX": 17.676075,
+            "LocY": 75.854711
         },
         {
             "NodeType": "TrustNode",
@@ -217,8 +217,8 @@
             "MaxBufferSize": 300,
             "IdleEnergyCoef": 0.0092,
             "ExeEnergyCoef": 0.0921,
-            "LocX": 113.140381,
-            "LocY": 24.605675
+            "LocX": 3.584942,
+            "LocY": 93.255393
         },
         {
             "NodeType": "TrustNode",
@@ -228,8 +228,8 @@
             "MaxBufferSize": 140,
             "IdleEnergyCoef": 0.0036,
             "ExeEnergyCoef": 0.0358,
-            "LocX": 155.163525,
-            "LocY": -17.675927
+            "LocX": 94.345614,
+            "LocY": 24.697654
         },
         {
             "NodeType": "MaliciousNode",
@@ -239,8 +239,8 @@
             "MaxBufferSize": 70,
             "IdleEnergyCoef": 0.006,
             "ExeEnergyCoef": 0.0604,
-            "LocX": 131.373667,
-            "LocY": 76.235148
+            "LocX": 41.862958,
+            "LocY": 85.880616
         },
         {
             "NodeType": "TrustNode",
@@ -250,8 +250,8 @@
             "MaxBufferSize": 330,
             "IdleEnergyCoef": 0.004,
             "ExeEnergyCoef": 0.04,
-            "LocX": -138.604719,
-            "LocY": 24.395538
+            "LocX": 63.966443,
+            "LocY": 20.845368
         },
         {
             "NodeType": "MaliciousNode",
@@ -261,8 +261,8 @@
             "MaxBufferSize": 250,
             "IdleEnergyCoef": 0.009,
             "ExeEnergyCoef": 0.0899,
-            "LocX": 111.196684,
-            "LocY": 60.828194
+            "LocX": 18.152711,
+            "LocY": 79.813763
         },
         {
             "NodeType": "TrustNode",
@@ -272,8 +272,8 @@
             "MaxBufferSize": 170,
             "IdleEnergyCoef": 0.0092,
             "ExeEnergyCoef": 0.0924,
-            "LocX": -72.302605,
-            "LocY": -11.352572
+            "LocX": 53.37274,
+            "LocY": 12.121767
         }
     ],
     "Edges": [
