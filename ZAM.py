@@ -42,7 +42,7 @@ def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timer
 def main():
     # Create the Env
     scenario=Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
-    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
+    env = ZAM_env(scenario, config_file="core/configs/env_config_null.json")
 
     time_slice = 500
     # Load simulated tasks

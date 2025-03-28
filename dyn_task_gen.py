@@ -18,7 +18,6 @@ from core.vis import *
 from core.vis.vis_stats import VisStats
 from examples.scenarios.zam_scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
-from policies.demo.demo_greedy import GreedyPolicy
 from policies.demo.demo_round_robin import RoundRobinPolicy
 
 
@@ -75,8 +74,8 @@ def main():
     # flag = 'Tuple100K'
     
     # Create the environment with the specified scenario and configuration files.
-    scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/25N50E/config.json")
-    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
+    scenario=Scenario(config_file=f"examples/scenarios/configs/trust_config_1.json")
+    env = ZAM_env(scenario, config_file="core/configs/env_config_null.json")
 
     time_slice = 500
 
@@ -84,7 +83,7 @@ def main():
     next_arrival = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
 
     # Load the test dataset.
-    data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/25N50E/testset.csv")
+    data = pd.read_csv(f"examples/dataset/demo3_dataset.csv")
     simulated_tasks = list(data.iloc[:].values)
 
     # Init the policy.
@@ -112,8 +111,8 @@ def main():
 
         # Make the src node online if we need to.
         src_node = env.scenario.get_node(task_info['SrcName']).name
-        while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
-                    next_arrival[src_node] += 1
+        # while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
+        #             next_arrival[src_node] += 1
 
         while True:
             # Catch completed task information.
@@ -121,8 +120,8 @@ def main():
                 item = env.done_task_info.pop(0)
             
             if env.now >= generated_time:
-                dst_node = policy.act_ZAM(env, task)  # offloading decision
-                env.process(task=task, dst_name=dst_node.name)
+                dst_node = policy.act(env, task)  # offloading decision
+                env.process(task=task, dst_name=f'n{dst_node}')
                 launched_task_cnt += 1
                 break
 
@@ -154,7 +153,6 @@ def main():
 
             until += 1
 
-        time.sleep(0.0)
 
     # Continue the simulation until the last task successes/fails.
     while env.task_count < launched_task_cnt:
@@ -207,10 +205,11 @@ def main():
 
     env.close()
     
-    # Stats Visualization
-    vis = VisStats(path_dir)
-    vis.vis(env)
+    # # Stats Visualization
+    # vis = VisStats(path_dir)
+    # vis.vis(env)
 
+    vis_frame2video(env)
 
 if __name__ == '__main__':
     main()
