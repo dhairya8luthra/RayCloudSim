@@ -931,8 +931,8 @@ class Env_Trust(Env):
 
 class ZAM_env(Env_Trust):
 
-    def __init__(self, scenario: BaseScenario, config_file):
-        super().__init__(scenario, config_file)
+    def __init__(self, scenario: BaseScenario, config_file, verbose=True, decimal_places=3):
+        super().__init__(scenario, config_file, verbose, decimal_places)
         self.down = {}
         self.up = {}
         self.down.setdefault(self.controller.now, [])
@@ -1148,8 +1148,8 @@ class ZAM_env(Env_Trust):
 
     def compute_trust(self):
 
-        THRESHOLD = 1.0
-        OLD_WEIGHT = 0.7
+        THRESHOLD = 1.2
+        OLD_WEIGHT = 0.8
         COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
 
         # Update over all the nodes
@@ -1197,21 +1197,21 @@ class ZAM_env(Env_Trust):
 
         print("=== ===")
         for node, trust in self.global_trust.items():
-            if node.get_online():
-                z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-                if (z_trust <= lower_bound or z_trust >= higher_bound) and isinstance(node, ZAMNode):
-                    print(f"Malicious Node Detected: {node.node_id}")
-                    zscore_detected.append(node.node_id)
-                    # Update the confusion metrics
-                    if isinstance(node, ZAMMalicious):
-                        self.true_positive += 1
-                    else:
-                        self.false_positive += 1
+
+            z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
+            if (z_trust <= lower_bound or z_trust >= higher_bound) and isinstance(node, ZAMNode):
+                print(f"Malicious Node Detected: {node.node_id}")
+                zscore_detected.append(node.node_id)
+                # Update the confusion metrics
+                if isinstance(node, ZAMMalicious):
+                    self.true_positive += 1
                 else:
-                    if isinstance(node, ZAMMalicious):
-                        self.true_negative += 1
-                    else:
-                        self.false_negative += 1
+                    self.false_positive += 1
+            else:
+                if isinstance(node, ZAMMalicious):
+                    self.true_negative += 1
+                else:
+                    self.false_negative += 1
 
         print("=== ===")
         if zscore_detected:
@@ -1244,17 +1244,16 @@ class ZAM_env(Env_Trust):
 
         # Update the confusion metrics
         for node, _ in self.global_trust.items():
-            if node.get_online():
-                if node.node_id not in boxplot_detected:
-                    if isinstance(node, ZAMMalicious):
-                        self.true_negative_boxplot += 1
-                    else:
-                        self.false_negative_boxplot += 1
+            if node.node_id not in boxplot_detected:
+                if isinstance(node, ZAMMalicious):
+                    self.true_negative_boxplot += 1
                 else:
-                    if isinstance(node, ZAMMalicious):
-                        self.true_positive_boxplot += 1
-                    else:
-                        self.false_positive_boxplot += 1
+                    self.false_negative_boxplot += 1
+            else:
+                if isinstance(node, ZAMMalicious):
+                    self.true_positive_boxplot += 1
+                else:
+                    self.false_positive_boxplot += 1
 
         print("----------------------------------------------------")
         if boxplot_detected:
@@ -1389,8 +1388,6 @@ class ZAM_env(Env_Trust):
                                key=task.task_id, 
                                value=(1, ['NetworkXNoPathError'], (task.src_name, dst_name)))
             log_info = f"**NetworkXNoPathError: Task {{{task.task_id}}}** Node {{{dst_name}}} is inaccessible"
-            self.scenario.get_node(task.dst_name).set_is_executing(False)
-            self.scenario.get_node(task.src_name).isBusy -= 1
             self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NO_PATH, -1, task.ddl])
             self.logger.log(log_info)
             raise EnvironmentError(('NetworkXNoPathError', log_info, task.task_id))
@@ -1401,8 +1398,6 @@ class ZAM_env(Env_Trust):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    value=(1, ['IsolatedWirelessNode'], (task.src_name, dst_name)))
-                self.scenario.get_node(task.dst_name).set_is_executing(False)
-                self.scenario.get_node(task.src_name).isBusy -= 1
                 self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_ISOLATED_WIRELESS_NODE, -1, task.ddl])
                 log_info = f"**IsolatedWirelessNode: Task {{{task.task_id}}}** Isolated wireless node detected"
                 self.logger.log(log_info)
@@ -1418,8 +1413,6 @@ class ZAM_env(Env_Trust):
                            f"network congestion Node {{{task.src_name}}} --> {{{dst_name}}}"
                 self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NET_CONGESTION, -1, task.ddl])
                 self.logger.log(log_info)
-                self.scenario.get_node(task.dst_name).set_is_executing(False)
-                self.scenario.get_node(task.src_name).isBusy -= 1
                 raise EnvironmentError(('NetCongestionError', log_info, task.task_id))
 
         task.trans_time = 0
@@ -1476,8 +1469,6 @@ class ZAM_env(Env_Trust):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    value=(1, ['InsufficientBufferError'], (task.src_name, task.dst_name)))
-                self.scenario.get_node(task.dst_name).set_is_executing(False)
-                self.scenario.get_node(task.src_name).isBusy -= 1
                 self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_INSUFFICIENT_BUFFER, -1, task.ddl])
                 self.logger.log(e.args[0][1])
                 raise e
@@ -1568,7 +1559,6 @@ class ZAM_env(Env_Trust):
                 task.trans_time = 0  # No transmission needed
 
         # Execute the task on the node
-        self.scenario.get_node(task.dst_name).set_is_executing(True)
         yield from self._execute_task_on_node(task, dst, flag_reactive)
 
 
@@ -1608,7 +1598,10 @@ class ZAM_env(Env_Trust):
                             self.process(task=waiting_task)
 
                     else:
-                        raise ValueError("Invalid flag!")
+                        # Handle invalid task flag with detailed error
+                        raise ValueError(f"Invalid flag '{flag}' encountered for task {task_id}")
+
+            # --- Reset for Next Cycle ---
             else:
                 self.done_task_info = []
                 # self.logger.log("")  # turn on: log on every time slot

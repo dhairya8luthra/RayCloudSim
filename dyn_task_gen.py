@@ -18,7 +18,6 @@ from core.vis import *
 from core.vis.vis_stats import VisStats
 from examples.scenarios.zam_scenario import Scenario
 from eval.metrics.metrics import SuccessRate, AvgLatency  # metric
-from policies.demo.demo_greedy import GreedyPolicy
 from policies.demo.demo_round_robin import RoundRobinPolicy
 
 
@@ -112,8 +111,8 @@ def main():
 
         # Make the src node online if we need to.
         src_node = env.scenario.get_node(task_info['SrcName']).name
-        while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
-                    next_arrival[src_node] += 1
+        # while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
+        #             next_arrival[src_node] += 1
 
         while True:
             # Catch completed task information.
@@ -121,8 +120,8 @@ def main():
                 item = env.done_task_info.pop(0)
             
             if env.now >= generated_time:
-                dst_node = policy.act_ZAM(env, task)  # offloading decision
-                env.process(task=task, dst_name=dst_node.name)
+                dst_node = policy.act(env, task)  # offloading decision
+                env.process(task=task, dst_name=f'n{dst_node}')
                 launched_task_cnt += 1
                 break
 
@@ -154,7 +153,6 @@ def main():
 
             until += 1
 
-        time.sleep(0.0)
 
     # Continue the simulation until the last task successes/fails.
     while env.task_count < launched_task_cnt:
@@ -207,10 +205,38 @@ def main():
 
     env.close()
     
-    # Stats Visualization
-    vis = VisStats(path_dir)
-    vis.vis(env)
+    # # Stats Visualization
+    # vis = VisStats(path_dir)
+    # vis.vis(env)
 
+    # Print the confusion metrics - Z Score
+    print("------------------------------------------------------")
+    print("Z-Score Confusion Matrix:")
+    print("True Positives:", env.true_positive)
+    print("True Negatives:", env.true_negative)
+    print("False Positives:", env.false_positive)
+    print("False Negatives:", env.false_negative)
+    print("Accuracy:", (env.true_positive + env.true_negative) / (env.true_positive + env.true_negative + env.false_positive + env.false_negative))
+    print("Precision:", env.true_positive / (env.true_positive + env.false_positive))
+    print("F1 Score:", (2 * env.true_positive) / (2 * env.true_positive + env.false_positive + env.false_negative))
+    print("------------------------------------------------------\n")
+
+    # Print the confusion metrics - Boxplot
+    print("------------------------------------------------------")
+    print("Boxplot Confusion Matrix:")
+    print("True Positives:", env.true_positive_boxplot)
+    print("True Negatives:", env.true_negative_boxplot)
+    print("False Positives:", env.false_positive_boxplot)
+    print("False Negatives:", env.false_negative_boxplot)
+    print("Accuracy:", (env.true_positive_boxplot + env.true_negative_boxplot) / (env.true_positive_boxplot + env.true_negative_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("Precision:", env.true_positive_boxplot / (env.true_positive_boxplot + env.false_positive_boxplot))
+    print("F1 Score:", (2 * env.true_positive_boxplot) / (2 * env.true_positive_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
+    print("------------------------------------------------------\n")
+
+    nodes_to_plot = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    malicious_nodes = [2,4]
+
+    # vis_frame2video(env)
 
 if __name__ == '__main__':
     main()

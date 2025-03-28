@@ -42,7 +42,7 @@ def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timer
 def main():
     # Create the Env
     scenario=Scenario(config_file="examples/scenarios/configs/trust_config_1.json")
-    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
+    env = ZAM_env(scenario, config_file="core/configs/env_config_null.json")
 
     time_slice = 500
     # Load simulated tasks
@@ -101,7 +101,7 @@ def main():
                 env.toggle_status(arrival_times, arrival_pointer)
             except Exception as e:
                 error_handler_3(e)
-                
+
             try:
                 env.ballot_stuffing_attack()
             except Exception as e:
@@ -291,44 +291,44 @@ def main():
     plt.show()
 # --- Z-Score Detections Over Time ---
 # Get sorted times for which a detection occurred
-    zscore_times = sorted(env.zscore_detections.keys())
-    zscore_counts = [len(env.zscore_detections[t]) for t in zscore_times]
+    # zscore_times = sorted(env.zscore_detections.keys())
+    # zscore_counts = [len(env.zscore_detections[t]) for t in zscore_times]
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(zscore_times, zscore_counts, marker='o', linestyle='-', color='green', label='Z-Score Detection Count')
-    for t in zscore_times:
-    # Get list of detected node IDs at time t and convert them to names like "n<id>"
-        node_ids = env.zscore_detections[t]
-        node_names = [f"n{node_id}" for node_id in node_ids]
-        annotation_text = ', '.join(node_names)
-    # Annotate above the point
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(zscore_times, zscore_counts, marker='o', linestyle='-', color='green', label='Z-Score Detection Count')
+    # for t in zscore_times:
+    # # Get list of detected node IDs at time t and convert them to names like "n<id>"
+    #     node_ids = env.zscore_detections[t]
+    #     node_names = [f"n{node_id}" for node_id in node_ids]
+    #     annotation_text = ', '.join(node_names)
+    # # Annotate above the point
        
-    plt.xlabel('Time', fontsize=12)
-    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
-    plt.title('Z-Score Malicious Detections Over Time', fontsize=14, fontweight='bold')
-    plt.legend(loc='upper right', fontsize=10)
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-    plt.tight_layout()
-    plt.show()
+    # plt.xlabel('Time', fontsize=12)
+    # plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    # plt.title('Z-Score Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    # plt.legend(loc='upper right', fontsize=10)
+    # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # plt.tight_layout()
+    # plt.show()
 
 # --- Boxplot Detections Over Time ---
-    boxplot_times = sorted(env.boxplot_detections.keys())
-    boxplot_counts = [len(env.boxplot_detections[t]) for t in boxplot_times]
+    # boxplot_times = sorted(env.boxplot_detections.keys())
+    # boxplot_counts = [len(env.boxplot_detections[t]) for t in boxplot_times]
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(boxplot_times, boxplot_counts, marker='o', linestyle='-', color='purple', label='Boxplot Detection Count')
-    for t in boxplot_times:
-        node_ids = env.boxplot_detections[t]
-        node_names = [f"n{node_id}" for node_id in node_ids]
-        annotation_text = ', '.join(node_names)
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(boxplot_times, boxplot_counts, marker='o', linestyle='-', color='purple', label='Boxplot Detection Count')
+    # for t in boxplot_times:
+    #     node_ids = env.boxplot_detections[t]
+    #     node_names = [f"n{node_id}" for node_id in node_ids]
+    #     annotation_text = ', '.join(node_names)
         
-    plt.xlabel('Time', fontsize=12)
-    plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
-    plt.title('Boxplot Malicious Detections Over Time', fontsize=14, fontweight='bold')
-    plt.legend(loc='upper right', fontsize=10)
-    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
-    plt.tight_layout()
-    plt.show()
+    # plt.xlabel('Time', fontsize=12)
+    # plt.ylabel('Number of Malicious Nodes Detected', fontsize=12)
+    # plt.title('Boxplot Malicious Detections Over Time', fontsize=14, fontweight='bold')
+    # plt.legend(loc='upper right', fontsize=10)
+    # plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # plt.tight_layout()
+    # plt.show()
     # Visualization: frames to video
     vis_frame2video(env)
 

@@ -2,8 +2,8 @@ import json
 import random
 
 # Define latitude and longitude ranges (adjust as needed)
-LAT_MIN, LAT_MAX = -90.0, 90.0
-LON_MIN, LON_MAX = -180.0, 180.0
+LAT_MIN, LAT_MAX = 0, 100.0
+LON_MIN, LON_MAX = 0, 100.0
 
 # Load the JSON file
 with open("config.json", "r") as file:
