@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import simpy
 import numpy as np
 import networkx as nx
@@ -1001,7 +1002,29 @@ class ZAM_env(Env_Trust):
             print(f"Ballot stuffing attack: Malicious node {malicious_node.name} set peer ratings of top trusted nodes "
                 f"{[tn.name for tn in top_trusted_nodes]} to 0.")
 
+    def toggle_dynamic(self, arrival_times, next_arrival):
 
+        OFFLINE_PROBABILITY = 0.3
+        ONLINE_PROBABILITY = 0.7
+
+        for _, node in self.scenario.get_nodes().items():
+            if isinstance(node, ZAMNode):
+                if node.get_is_executing() or node.isBusy:
+                    continue
+            
+                if node.get_online() \
+                    and random.random() < OFFLINE_PROBABILITY \
+                        and (node.isBusy == 0 or not node.get_is_executing()):
+                    node.set_online(False)
+
+                elif not node.get_online() \
+                        and random.random() < ONLINE_PROBABILITY:
+                    node.set_online(True)
+
+                # If the next arriving task is within 2 seconds.
+                elif not node.get_online() and arrival_times[node.name][next_arrival[node.name]] <= int(self.controller.now) + 2:
+                    node.set_online(False)
+                    
 
     def toggle_status(self, arrival_times, arrival_pointer):
         now = int(self.controller.now)

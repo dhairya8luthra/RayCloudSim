@@ -64,13 +64,13 @@ def error_handler_2(error: Exception):
 def error_handler_3(error: Exception):
     print(3, error)
 
-def error_handler_4(error: Exception, arrival_times, arrival_pointer, task_timers, now):
+def error_handler_4(error: Exception, arrival_times, next_arrival, task_timers, now):
     _, _, task_id = error.args[0]
-    # Increament the arrival_pointer till the generated time[pointer] is greater than the current time
+    # Increament the next_arrival till the generated time[pointer] is greater than the current time
     node = task_timers[task_id]
 
-    while arrival_pointer[node] < len(arrival_times[node]) and arrival_times[node][arrival_pointer[node]] <= now + 2:
-        arrival_pointer[node] += 1
+    while next_arrival[node] < len(arrival_times[node]) and arrival_times[node][next_arrival[node]] <= now + 2:
+        next_arrival[node] += 1
 
 def main():
     flag = 'Tuple30K'
@@ -83,11 +83,18 @@ def main():
 
     time_slice = 500
 
+    arrival_times = {node.name: [] for _, node in env.scenario.get_nodes().items()}
+    next_arrival = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
+
     # Load the test dataset.
     data = pd.read_csv(f"eval/benchmarks/Topo4MEC/data/25N50E/testset.csv")
+    simulated_tasks = list(data.iloc[:].values)
 
     # Init the policy.
     policy = RoundRobinPolicy()
+
+    for task_info in simulated_tasks:
+        arrival_times[task_info[7]].append(task_info[1])
 
     # Begin the simulation.
     until = 0
@@ -105,6 +112,11 @@ def main():
                     task_name=task_info['TaskName'])
 
         env.scenario.get_node(task_info['SrcName']).isBusy += 1
+
+        # Make the src node online if we need to.
+        src_node = env.scenario.get_node(task_info['SrcName'])           
+        while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
+                    next_arrival[src_node] += 1
 
         while True:
             # Catch completed task information.
