@@ -5,6 +5,7 @@ This script demonstrates how to use the Pakistan dataset.
 import os
 import sys
 import time
+import matplotlib.pyplot as plt
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
 parent_dir = os.path.dirname(current_dir)
@@ -77,7 +78,7 @@ def main():
     scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/25N50E/config.json")
     env = ZAM_env(scenario, config_file="core/configs/env_config.json")
 
-    time_slice = 500
+    time_slice = 1000
 
     arrival_times = {node.name: [] for _, node in env.scenario.get_nodes().items()}
     next_arrival = {node.name: 0 for _, node in env.scenario.get_nodes().items()}
@@ -233,10 +234,60 @@ def main():
     print("F1 Score:", (2 * env.true_positive_boxplot) / (2 * env.true_positive_boxplot + env.false_positive_boxplot + env.false_negative_boxplot))
     print("------------------------------------------------------\n")
 
-    nodes_to_plot = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    malicious_nodes = [2,4]
+    nodes_to_plot = [i for i in range(len(env.scenario.get_nodes()))]
+    malicious_nodes = [3, 4, 10, 12, 14, 21, 23]
 
     # vis_frame2video(env)
+
+    plt.figure(figsize=(10, 6))
+    for node in nodes_to_plot:
+        if node in malicious_nodes:
+            plt.plot(env.trust_values[node][:time_slice], label=f'Node n{node}', color='darkred', linewidth=3)
+        else:
+            plt.plot(env.trust_values[node][:time_slice], label=f'Node n{node}', linewidth=1)
+            
+    # Prepare lists to collect attack marker coordinates.
+    bsa_x, bsa_y = [], []      
+    onoff_x, onoff_y = [], []     
+    # Loop through the attacks dictionary to get marker positions.
+    for attack_time, events in env.attacks.items():
+    # Only consider attacks within time 0-time_slice.
+        if attack_time < 0 or attack_time > time_slice:
+            continue
+        for event in events:
+            attacking_node = event["attacking_node"]
+            attack_type = event["attack_type"]
+            try:
+                node_index = int(attacking_node.strip('n'))
+            except Exception as e:
+                continue
+        # Use the simulation time as the x coordinate.
+        time_index = int(attack_time)
+        # Ensure that the trust value list is long enough.
+        if time_index < len(env.trust_values[node_index]):
+            y_value = env.trust_values[node_index][time_index]
+            if attack_type == "ballot stuffing":
+                bsa_x.append(time_index)
+                bsa_y.append(y_value)
+            elif attack_type == "on-off attack":
+                onoff_x.append(time_index)
+                onoff_y.append(y_value)
+
+    # Plot attack markers if any.
+    if bsa_x:
+        plt.scatter(bsa_x, bsa_y, color='blue', marker='x', s=100, label='BSA Attack')
+    if onoff_x:
+        plt.scatter(onoff_x, onoff_y, color='red', marker='x', s=100, label='On-off Attack')
+
+    plt.xlabel('Time', fontsize=12)
+    plt.ylabel('Trust Value', fontsize=12)
+    plt.title(f'Trust Values of Nodes n1 and n12 Over Time (Time 0-{time_slice})', fontsize=14, fontweight='bold')
+    plt.legend(loc='lower right', fontsize=10)
+    plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.xlim(0, time_slice)
+    plt.tight_layout()
+    plt.show()
+   
 
 if __name__ == '__main__':
     main()
