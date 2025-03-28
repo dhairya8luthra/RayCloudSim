@@ -124,9 +124,8 @@ def main():
                 item = env.done_task_info.pop(0)
             
             if env.now >= generated_time:
-                dst_id = policy.act(env, task)  # offloading decision
-                dst_name = env.scenario.node_id2name[dst_id]
-                env.process(task=task, dst_name=dst_name)
+                dst_node = policy.act_ZAM(env, task)  # offloading decision
+                env.process(task=task, dst_name=dst_node.name)
                 launched_task_cnt += 1
                 break
 
