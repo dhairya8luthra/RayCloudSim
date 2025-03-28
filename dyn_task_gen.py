@@ -4,7 +4,7 @@ This script demonstrates how to use the Pakistan dataset.
 
 import os
 import sys
-
+import time
 current_file_path = os.path.abspath(__file__)
 current_dir = os.path.dirname(current_file_path)
 parent_dir = os.path.dirname(current_dir)
@@ -124,6 +124,26 @@ def main():
                 launched_task_cnt += 1
                 break
 
+            try:
+                env.computeQoS()
+            except Exception as e:
+                error_handler_1(e)
+
+            try:
+                env.compute_trust()
+            except Exception as e:
+                error_handler_2(e)
+
+            try:
+                env.toggle_status(arrival_times, next_arrival)
+            except Exception as e:
+                error_handler_3(e)
+
+            try:
+                env.ballot_stuffing_attack()
+            except Exception as e:
+                print(e)  
+
             # Execute the simulation with error handler.
             try:
                 env.run(until=until)
@@ -132,9 +152,32 @@ def main():
 
             until += 1
 
+        time.sleep(0.0)
+
     # Continue the simulation until the last task successes/fails.
     while env.task_count < launched_task_cnt:
         until += 1
+        try:
+            env.computeQoS()
+        except Exception as e:
+            error_handler_1(e)
+
+        try:
+            env.compute_trust()
+        except Exception as e:
+            error_handler_2(e)
+
+        try:
+            env.toggle_status(arrival_times, next_arrival)
+        except Exception as e:
+            error_handler_3(e)
+
+        try:
+            env.ballot_stuffing_attack()
+        except Exception as e:
+            print(e)  
+
+        # Execute the simulation with error handler.
         try:
             env.run(until=until)
         except Exception as e:
