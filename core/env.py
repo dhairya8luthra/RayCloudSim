@@ -1199,7 +1199,7 @@ class ZAM_env(Env_Trust):
         for node, trust in self.global_trust.items():
 
             z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-            if (z_trust <= lower_bound or z_trust >= higher_bound) and isinstance(node, ZAMNode):
+            if z_trust <= lower_bound and isinstance(node, ZAMNode):
                 print(f"Malicious Node Detected: {node.node_id}")
                 zscore_detected.append(node.node_id)
                 # Update the confusion metrics
@@ -1236,7 +1236,7 @@ class ZAM_env(Env_Trust):
         print(f"Upper Bound for Outliers: {upper_bound}")
 
         # Identify potential outliers
-        outliers = [trust for trust in trust_values if trust < lower_bound or trust > upper_bound]
+        outliers = [trust for trust in trust_values if trust < lower_bound]
         for outlier in outliers:
             node_id = [node.node_id for node, trust in self.global_trust.items() if trust == outlier][0]
             print(f"using boxplot method the malicious node is {node_id} with trust value {outlier}")
