@@ -12,7 +12,7 @@ class RoundRobinPolicy(BasePolicy):
 
     def act_ZAM(self, env, task):
                 
-                online_nodes = [node for node in env.scenario.get_nodes() if node.get_online]
+                online_nodes = [node for _, node in env.scenario.get_nodes().items() if node.get_online()]
                 if not online_nodes:
                     return None 
                 current_index = self.idx % len(online_nodes)

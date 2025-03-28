@@ -1050,7 +1050,7 @@ class ZAM_env(Env_Trust):
                     node.set_online(True)
 
                 # If the next arriving task is within 2 seconds.
-                elif not node.get_online() and arrival_times[node.name][next_arrival[node.name]] <= int(self.controller.now) + 2:
+                elif not node.get_online() and (len(arrival_times[node.name]) < next_arrival[node.name] and arrival_times[node.name][next_arrival[node.name]] <= int(self.controller.now) + 2):
                     node.set_online(False)
                     
 

@@ -12,7 +12,7 @@ sys.path.insert(0, parent_dir)
 
 import pandas as pd
 
-from core.env import Env
+from core.env import ZAM_env
 from core.task import Task
 from core.vis import *
 from core.vis.vis_stats import VisStats
@@ -61,11 +61,13 @@ def error_handler_2(error: Exception):
     print(2, error)
     exit()
 
-def error_handler_3(error: Exception):
-    print(3, error)
+def error_handler_3(error: Exception, until):
+    print(3, error, until)
+    exit()
 
 def error_handler_4(error: Exception):
     print(4, error)
+    exit()
 
 def main():
     flag = 'Tuple30K'
@@ -74,7 +76,7 @@ def main():
     
     # Create the environment with the specified scenario and configuration files.
     scenario=Scenario(config_file=f"eval/benchmarks/Topo4MEC/data/25N50E/config.json")
-    env = Env(scenario, config_file="core/configs/env_config_null.json", verbose=True, decimal_places=3)
+    env = ZAM_env(scenario, config_file="core/configs/env_config.json")
 
     time_slice = 500
 
@@ -109,7 +111,7 @@ def main():
         env.scenario.get_node(task_info['SrcName']).isBusy += 1
 
         # Make the src node online if we need to.
-        src_node = env.scenario.get_node(task_info['SrcName'])           
+        src_node = env.scenario.get_node(task_info['SrcName']).name
         while next_arrival[src_node] < len(arrival_times[src_node]) and arrival_times[src_node][next_arrival[src_node]] <= env.controller.now + 2:
                     next_arrival[src_node] += 1
 
@@ -135,9 +137,9 @@ def main():
                 error_handler_2(e)
 
             try:
-                env.toggle_status(arrival_times, next_arrival)
+                env.toggle_dynamic(arrival_times, next_arrival)
             except Exception as e:
-                error_handler_3(e)
+                error_handler_3(e, until=until)
 
             try:
                 env.ballot_stuffing_attack()
@@ -156,6 +158,7 @@ def main():
 
     # Continue the simulation until the last task successes/fails.
     while env.task_count < launched_task_cnt:
+        print(until)
         until += 1
         try:
             env.computeQoS()
@@ -168,9 +171,9 @@ def main():
             error_handler_2(e)
 
         try:
-            env.toggle_status(arrival_times, next_arrival)
+            env.toggle_dynamic(arrival_times, next_arrival)
         except Exception as e:
-            error_handler_3(e)
+            error_handler_3(e, until=until)
 
         try:
             env.ballot_stuffing_attack()
