@@ -280,7 +280,8 @@ class ZAMNode(Node):
         self.online = False
         self.QoS = 0.0
         self.isExecuting = False
-        
+        self.isBusy = 0
+
         # For QoS Calculation
         self.successful_tasks = 0
         self.total_tasks = 0

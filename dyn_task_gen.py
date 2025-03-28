@@ -104,6 +104,8 @@ def main():
                     src_name=task_info['SrcName'],
                     task_name=task_info['TaskName'])
 
+        env.scenario.get_node(task_info['SrcName']).isBusy += 1
+
         while True:
             # Catch completed task information.
             while env.done_task_info:
