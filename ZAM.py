@@ -101,6 +101,7 @@ def main():
                 env.toggle_status(arrival_times, arrival_pointer)
             except Exception as e:
                 error_handler_3(e)
+                
             try:
                 env.ballot_stuffing_attack()
             except Exception as e:

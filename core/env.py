@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import simpy
 import numpy as np
 import networkx as nx
@@ -293,9 +294,23 @@ class Env:
                 raise e
 
         if flag_reactive:
-            task.allocate(self.now)
-            self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
+            try:
+                task.allocate(self.now)
+                self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
                             f"waiting {{{(task.wait_time - task.trans_time):.{self.decimal_places}f}}}s")
+            except EnvironmentError as e:
+                self.task_count += 1
+                self.logger.append(info_type='task', 
+                                   key=task.task_id, 
+                                   value=(1, ['TimeoutError'], (task.src_name, task.dst_name)))
+                self.logger.log(e.args[0][1])
+
+                waiting_task = task.dst.pop_task()
+                if waiting_task:
+                    self.process(task=waiting_task, dst_name=task.dst_name)
+                else:
+                    self.logger.log(f"Task {{{task.task_id}}} is buffered in Node {{{task.dst_name}}}")
+                raise e
         else:
             task.allocate(self.now, dst)
 
@@ -797,9 +812,23 @@ class Env_Trust(Env):
                 raise e
 
         if flag_reactive:
-            task.allocate(self.now)
-            self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
+            try:
+                task.allocate(self.now)
+                self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
                             f"waiting {{{(task.wait_time - task.trans_time):.{self.decimal_places}f}}}s")
+            except EnvironmentError as e:
+                self.task_count += 1
+                self.logger.append(info_type='task', 
+                                   key=task.task_id, 
+                                   value=(1, ['TimeoutError'], (task.src_name, task.dst_name)))
+                self.logger.log(e.args[0][1])
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_EXECUTION_TIMEOUT])
+                waiting_task = task.dst.pop_task()
+                if waiting_task:
+                    self.process(task=waiting_task, dst_name=task.dst_name)
+                else:
+                    self.logger.log(f"Task {{{task.task_id}}} is buffered in Node {{{task.dst_name}}}")
+                raise e
         else:
             task.allocate(self.now, dst)
 
@@ -1001,7 +1030,29 @@ class ZAM_env(Env_Trust):
             print(f"Ballot stuffing attack: Malicious node {malicious_node.name} set peer ratings of top trusted nodes "
                 f"{[tn.name for tn in top_trusted_nodes]} to 0.")
 
+    def toggle_dynamic(self, arrival_times, next_arrival):
 
+        OFFLINE_PROBABILITY = 0.3
+        ONLINE_PROBABILITY = 0.7
+
+        for _, node in self.scenario.get_nodes().items():
+            if isinstance(node, ZAMNode):
+                if node.get_is_executing() or node.isBusy:
+                    continue
+            
+                if node.get_online() \
+                    and random.random() < OFFLINE_PROBABILITY \
+                        and (node.isBusy == 0 or not node.get_is_executing()):
+                    node.set_online(False)
+
+                elif not node.get_online() \
+                        and random.random() < ONLINE_PROBABILITY:
+                    node.set_online(True)
+
+                # If the next arriving task is within 2 seconds.
+                elif not node.get_online() and (len(arrival_times[node.name]) < next_arrival[node.name] and arrival_times[node.name][next_arrival[node.name]] <= int(self.controller.now) + 2):
+                    node.set_online(False)
+                    
 
     def toggle_status(self, arrival_times, arrival_pointer):
         now = int(self.controller.now)
@@ -1338,6 +1389,8 @@ class ZAM_env(Env_Trust):
                                key=task.task_id, 
                                value=(1, ['NetworkXNoPathError'], (task.src_name, dst_name)))
             log_info = f"**NetworkXNoPathError: Task {{{task.task_id}}}** Node {{{dst_name}}} is inaccessible"
+            self.scenario.get_node(task.dst_name).set_is_executing(False)
+            self.scenario.get_node(task.src_name).isBusy -= 1
             self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NO_PATH, -1, task.ddl])
             self.logger.log(log_info)
             raise EnvironmentError(('NetworkXNoPathError', log_info, task.task_id))
@@ -1348,6 +1401,8 @@ class ZAM_env(Env_Trust):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    value=(1, ['IsolatedWirelessNode'], (task.src_name, dst_name)))
+                self.scenario.get_node(task.dst_name).set_is_executing(False)
+                self.scenario.get_node(task.src_name).isBusy -= 1
                 self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_ISOLATED_WIRELESS_NODE, -1, task.ddl])
                 log_info = f"**IsolatedWirelessNode: Task {{{task.task_id}}}** Isolated wireless node detected"
                 self.logger.log(log_info)
@@ -1363,6 +1418,8 @@ class ZAM_env(Env_Trust):
                            f"network congestion Node {{{task.src_name}}} --> {{{dst_name}}}"
                 self.trust_messages.append([task.src_name, dst_name, task.task_id, FLAG_TASK_EXECUTION_NET_CONGESTION, -1, task.ddl])
                 self.logger.log(log_info)
+                self.scenario.get_node(task.dst_name).set_is_executing(False)
+                self.scenario.get_node(task.src_name).isBusy -= 1
                 raise EnvironmentError(('NetCongestionError', log_info, task.task_id))
 
         task.trans_time = 0
@@ -1419,14 +1476,32 @@ class ZAM_env(Env_Trust):
                 self.logger.append(info_type='task', 
                                    key=task.task_id, 
                                    value=(1, ['InsufficientBufferError'], (task.src_name, task.dst_name)))
+                self.scenario.get_node(task.dst_name).set_is_executing(False)
+                self.scenario.get_node(task.src_name).isBusy -= 1
                 self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_INSUFFICIENT_BUFFER, -1, task.ddl])
                 self.logger.log(e.args[0][1])
                 raise e
 
         if flag_reactive:
-            task.allocate(self.now)
-            self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
+            try:
+                task.allocate(self.now)
+                self.logger.log(f"Task {{{task.task_id}}} re-actives in Node {{{task.dst_name}}}, "
                             f"waiting {{{(task.wait_time - task.trans_time):.{self.decimal_places}f}}}s")
+            except EnvironmentError as e:
+                self.task_count += 1
+                self.logger.append(info_type='task', 
+                                   key=task.task_id, 
+                                   value=(1, ['TimeoutError'], (task.src_name, task.dst_name)))
+                self.scenario.get_node(task.dst_name).set_is_executing(False)
+                self.scenario.get_node(task.src_name).isBusy -= 1
+                self.logger.log(e.args[0][1])
+                self.trust_messages.append([task.src_name, task.dst_name, task.task_id, FLAG_TASK_EXECUTION_TIMEOUT, -1, task.ddl])
+                waiting_task = task.dst.pop_task()
+                if waiting_task:
+                    self.process(task=waiting_task, dst_name=task.dst_name)
+                else:
+                    self.logger.log(f"Task {{{task.task_id}}} is buffered in Node {{{task.dst_name}}}")
+                raise e
         else:
             task.allocate(self.now, dst)
 
@@ -1493,6 +1568,7 @@ class ZAM_env(Env_Trust):
                 task.trans_time = 0  # No transmission needed
 
         # Execute the task on the node
+        self.scenario.get_node(task.dst_name).set_is_executing(True)
         yield from self._execute_task_on_node(task, dst, flag_reactive)
 
 
