@@ -64,13 +64,8 @@ def error_handler_2(error: Exception):
 def error_handler_3(error: Exception):
     print(3, error)
 
-def error_handler_4(error: Exception, arrival_times, next_arrival, task_timers, now):
-    _, _, task_id = error.args[0]
-    # Increament the next_arrival till the generated time[pointer] is greater than the current time
-    node = task_timers[task_id]
-
-    while next_arrival[node] < len(arrival_times[node]) and arrival_times[node][next_arrival[node]] <= now + 2:
-        next_arrival[node] += 1
+def error_handler_4(error: Exception):
+    print(4, error)
 
 def main():
     flag = 'Tuple30K'
