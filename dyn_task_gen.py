@@ -179,6 +179,7 @@ if __name__ == '__main__':
               f"lambda_base={params['lambda_base']}, ALPHA={params['ALPHA']}, BETA={params['BETA']}")
         result = run_single_combination(params)
         tuning_results.append(result)
+        print(f"Result: {result}")
         if i % 10 == 0:
             print(f"Completed {i}/{total_combinations} combinations...")
 

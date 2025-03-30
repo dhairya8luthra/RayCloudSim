@@ -929,7 +929,8 @@ class Env_Trust(Env):
             yield self.controller.timeout(self.refresh_rate)
 class ZAM_env(Env_Trust):
     def __init__(self, scenario: BaseScenario, config_file, verbose=True, decimal_places=3,
-                 OLD_WEIGHT=0.8, THRESHOLD=1.2, lambda_task=0.7, lambda_time=0.3, lambda_base=0.5, ALPHA=0.7, BETA=0.7):
+                 OLD_WEIGHT=0.8, THRESHOLD=1.2, lambda_task=0.7, lambda_time=0.3,
+                 lambda_base=0.5, ALPHA=0.7, BETA=0.7):
         super().__init__(scenario, config_file, verbose, decimal_places)
         # Hyperparameters for trust and QoS computations
         self.OLD_WEIGHT = OLD_WEIGHT
@@ -1049,72 +1050,54 @@ class ZAM_env(Env_Trust):
         return t_final
 
     def compute_trust(self):
-        THRESHOLD = self.THRESHOLD
         OLD_WEIGHT = self.OLD_WEIGHT
         COMPUTE_WEIGHT = 1.0 - OLD_WEIGHT
+
+        # Update trust values for online nodes.
         for _, node in self.scenario.get_nodes().items():
             if isinstance(node, ZAMNode) and node.get_online():
                 old_trust = self.global_trust[node]
                 if self.compute_final_adaptive_weights_flag:
-                     compute_trust = self.compute_final_adaptive_weights(node)
+                    computed_trust = self.compute_final_adaptive_weights(node)
                 else:
-                     compute_trust = self.compute_final(node)
-                new_trust = (COMPUTE_WEIGHT * compute_trust) + (OLD_WEIGHT * old_trust)
-                new_trust = min(new_trust, 1.0)
-                self.global_trust[node] = new_trust
-                # Removed printing of new trust
+                    computed_trust = self.compute_final(node)
+                new_trust = (COMPUTE_WEIGHT * computed_trust) + (OLD_WEIGHT * old_trust)
+                self.global_trust[node] = min(new_trust, 1.0)
+
         for i in range(len(self.trust_values)):
             self.trust_values[i].append(self.global_trust[self.scenario.get_node(f'n{i}')])
-        trust_list = np.array([trust for _, trust in self.global_trust.items()])
-        mean_trust = trust_list.mean()
-        std_trust = trust_list.std()
-        higher_bound = mean_trust + THRESHOLD * std_trust
-        lower_bound = mean_trust - THRESHOLD * std_trust
-        # Removed printing of bounds and z-scores
-        zscore_detected = []
-        for node, trust in self.global_trust.items():
-            z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-            # Removed printing of individual z-scores
-        for node, trust in self.global_trust.items():
-            z_trust = (trust - mean_trust) / std_trust if std_trust != 0.0 else 0.0
-            if z_trust <= lower_bound and isinstance(node, ZAMNode):
-                zscore_detected.append(node.node_id)
+
+        # Prepare data for SVM classification.
+        trust_values_array = np.array([trust for _, trust in self.global_trust.items()]).reshape(-1, 1)
+
+        # Use One-Class SVM for anomaly (malicious node) detection.
+        from sklearn.svm import OneClassSVM
+        svm = OneClassSVM(kernel='rbf', gamma='scale', nu=0.1)
+        svm.fit(trust_values_array)
+        predictions = svm.predict(trust_values_array)
+        node_list = list(self.global_trust.keys())
+        anomalies = [node.node_id for idx, node in enumerate(node_list) if predictions[idx] == -1]
+
+        # Reset detection counters.
+        self.true_positive = 0
+        self.false_positive = 0
+        self.true_negative = 0
+        self.false_negative = 0
+
+        for idx, node in enumerate(node_list):
+            if predictions[idx] == -1:
                 if isinstance(node, ZAMMalicious):
                     self.true_positive += 1
                 else:
                     self.false_positive += 1
             else:
                 if isinstance(node, ZAMMalicious):
-                    self.true_negative += 1
-                else:
                     self.false_negative += 1
-        if zscore_detected:
-            self.zscore_detections[self.controller.now] = zscore_detected
-        trust_values = trust_list
-        Q1 = np.percentile(trust_values, 25)
-        Q3 = np.percentile(trust_values, 75)
-        IQR = Q3 - Q1
-        lower_bound_box = Q1 - 1.5 * IQR
-        upper_bound_box = Q3 + 1.5 * IQR
-        # Removed printing of boxplot bounds
-        boxplot_detected = []
-        outliers = [trust for trust in trust_values if trust < lower_bound_box]
-        for outlier in outliers:
-            node_id = [node.node_id for node, trust in self.global_trust.items() if trust == outlier][0]
-            boxplot_detected.append(node_id)
-        for node, _ in self.global_trust.items():
-            if node.node_id not in boxplot_detected:
-                if isinstance(node, ZAMMalicious):
-                    self.true_negative_boxplot += 1
                 else:
-                    self.false_negative_boxplot += 1
-            else:
-                if isinstance(node, ZAMMalicious):
-                    self.true_positive_boxplot += 1
-                else:
-                    self.false_positive_boxplot += 1
-        if boxplot_detected:
-            self.boxplot_detections[self.controller.now] = boxplot_detected
+                    self.true_negative += 1
+
+        if anomalies:
+            self.zscore_detections[self.controller.now] = anomalies
 
     def computeQoS(self):
         lambda_task = self.lambda_task
@@ -1148,8 +1131,6 @@ class ZAM_env(Env_Trust):
             exec_time = message[4]
             ddl = message[5]
             if dst.get_total_tasks() != 0 and ddl != 0:
-                dst.set_QoS((lambda_task * (dst.get_successful_tasks() / dst.get_total_tasks())) + (lambda_time * (1.0 - (exec_time / ddl))))
-            # Removed QoS update print
+                dst.set_QoS((lambda_task * (dst.get_successful_tasks() / dst.get_total_tasks())) +
+                            (lambda_time * (1.0 - (exec_time / ddl))))
         self.trust_messages.clear()
-
-    
