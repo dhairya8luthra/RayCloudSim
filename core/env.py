@@ -1067,14 +1067,14 @@ class ZAM_env(Env_Trust):
         for i in range(len(self.trust_values)):
             self.trust_values[i].append(self.global_trust[self.scenario.get_node(f'n{i}')])
 
-        # Prepare data for SVM classification.
+        # Prepare data for anomaly detection using k-NN LocalOutlierFactor.
         trust_values_array = np.array([trust for _, trust in self.global_trust.items()]).reshape(-1, 1)
+        n_samples = trust_values_array.shape[0]
+        n_neighbors_val = min(20, n_samples - 1) if n_samples > 1 else 1
 
-        # Use One-Class SVM for anomaly (malicious node) detection.
-        from sklearn.svm import OneClassSVM
-        svm = OneClassSVM(kernel='rbf', gamma='scale', nu=0.1)
-        svm.fit(trust_values_array)
-        predictions = svm.predict(trust_values_array)
+        from sklearn.neighbors import LocalOutlierFactor
+        lof = LocalOutlierFactor(n_neighbors=n_neighbors_val, contamination=0.1)
+        predictions = lof.fit_predict(trust_values_array)
         node_list = list(self.global_trust.keys())
         anomalies = [node.node_id for idx, node in enumerate(node_list) if predictions[idx] == -1]
 
